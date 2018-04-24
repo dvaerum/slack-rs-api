@@ -3,6 +3,7 @@ pub mod auth;
 pub mod bots;
 pub mod channels;
 pub mod chat;
+pub mod conversations;
 pub mod dnd;
 pub mod emoji;
 pub mod files_comments;
