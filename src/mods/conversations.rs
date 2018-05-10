@@ -1110,10 +1110,9 @@ impl<E: Error> Error for InfoError<E> {
     }
 }
 
-/*
-/// Invites a user to a private channel.
+/// Invites users to a channel.
 ///
-/// Wraps https://api.slack.com/methods/groups.invite
+/// Wraps https://api.slack.com/methods/conversations.invite
 
 pub fn invite<R>(
     client: &R,
@@ -1151,7 +1150,7 @@ pub struct InviteRequest<'a> {
 #[derive(Clone, Debug, Deserialize)]
 pub struct InviteResponse {
     error: Option<String>,
-    pub group: Option<::Group>,
+    pub channel: Option<::Channel>,
     #[serde(default)]
     ok: bool,
 }
@@ -1174,10 +1173,18 @@ pub enum InviteError<E: Error> {
     UserNotFound,
     /// Authenticated user cannot invite themselves to a group.
     CantInviteSelf,
+    /// Authenticated user is not in the channel.
+    NotInChannel,
+    /// Invited user is already in the channel.
+    AlreadyInChannel,
     /// Group has been archived.
     IsArchived,
     /// User cannot be invited to this group.
     CantInvite,
+    /// This type of conversation cannot be used with this method.
+    MethodNotSupportedForChannelType,
+    /// The calling token is not granted the necessary scopes to complete this operation.
+    MissingScope,
     /// URA is already in the maximum number of channels.
     UraMaxChannels,
     /// No authentication token provided.
@@ -1186,6 +1193,12 @@ pub enum InviteError<E: Error> {
     InvalidAuth,
     /// Authentication token is for a deleted user or team.
     AccountInactive,
+    /// Authentication token is for a deleted user or workspace or the app has been removed.
+    TokenRevoked,
+    /// The workspace token used in this request does not have the permissions necessary to complete the request.
+    NoPermission,
+    /// The workspace is undergoing an enterprise migration and will not be available until migration is complete.
+    OrgLoginRequired,
     /// This method cannot be called by a bot user.
     UserIsBot,
     /// This method cannot be called by a single channel guest.
@@ -1206,6 +1219,8 @@ pub enum InviteError<E: Error> {
     TeamAddedToOrg,
     /// The method was called via a POST request, but the POST data was either missing or truncated.
     RequestTimeout,
+    /// The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised.
+    FatelError,
     /// The response was not parseable as the expected object
     MalformedResponse(serde_json::error::Error),
     /// The response returned an error that was unknown to the library
@@ -1220,12 +1235,19 @@ impl<'a, E: Error> From<&'a str> for InviteError<E> {
             "channel_not_found" => InviteError::ChannelNotFound,
             "user_not_found" => InviteError::UserNotFound,
             "cant_invite_self" => InviteError::CantInviteSelf,
+            "not_in_channel" => InviteError::NotInChannel,
+            "already_in_channel" => InviteError::AlreadyInChannel,
             "is_archived" => InviteError::IsArchived,
             "cant_invite" => InviteError::CantInvite,
+            "method_not_supported_for_channel_type" => InviteError::MethodNotSupportedForChannelType,
+            "missing_scope" => InviteError::MissingScope,
             "ura_max_channels" => InviteError::UraMaxChannels,
             "not_authed" => InviteError::NotAuthed,
             "invalid_auth" => InviteError::InvalidAuth,
             "account_inactive" => InviteError::AccountInactive,
+            "token_revoked" => InviteError::TokenRevoked,
+            "no_permission" => InviteError::NoPermission,
+            "org_login_required" => InviteError::OrgLoginRequired,
             "user_is_bot" => InviteError::UserIsBot,
             "user_is_ultra_restricted" => InviteError::UserIsUltraRestricted,
             "invalid_arg_name" => InviteError::InvalidArgName,
@@ -1236,6 +1258,7 @@ impl<'a, E: Error> From<&'a str> for InviteError<E> {
             "missing_post_type" => InviteError::MissingPostType,
             "team_added_to_org" => InviteError::TeamAddedToOrg,
             "request_timeout" => InviteError::RequestTimeout,
+            "fatal_error" => InviteError::FatelError,
             _ => InviteError::Unknown(s.to_owned()),
         }
     }
@@ -1257,8 +1280,16 @@ impl<E: Error> Error for InviteError<E> {
             InviteError::CantInviteSelf => {
                 "cant_invite_self: Authenticated user cannot invite themselves to a group."
             }
+            InviteError::NotInChannel => "not_in_channel: Authenticated user is not in the channel.",
+            InviteError::AlreadyInChannel => "already_in_channel: Invited user is already in the channel.",
             InviteError::IsArchived => "is_archived: Group has been archived.",
             InviteError::CantInvite => "cant_invite: User cannot be invited to this group.",
+            InviteError::MethodNotSupportedForChannelType => {
+                "method_not_supported_for_channel_type: This type of conversation cannot be used with this method."
+            }
+            InviteError::MissingScope => {
+                "missing_scope: The calling token is not granted the necessary scopes to complete this operation."
+            }
             InviteError::UraMaxChannels => {
                 "ura_max_channels: URA is already in the maximum number of channels."
             }
@@ -1266,6 +1297,15 @@ impl<E: Error> Error for InviteError<E> {
             InviteError::InvalidAuth => "invalid_auth: Invalid authentication token.",
             InviteError::AccountInactive => {
                 "account_inactive: Authentication token is for a deleted user or team."
+            }
+            InviteError::TokenRevoked => {
+                "Authentication token is for a deleted user or workspace or the app has been removed."
+            }
+            InviteError::NoPermission => {
+                "no_permission: The workspace token used in this request does not have the permissions necessary to complete the request."
+            }
+            InviteError::OrgLoginRequired => {
+                "org_login_required: The workspace is undergoing an enterprise migration and will not be available until migration is complete."
             }
             InviteError::UserIsBot => "user_is_bot: This method cannot be called by a bot user.",
             InviteError::UserIsUltraRestricted => {
@@ -1295,6 +1335,9 @@ impl<E: Error> Error for InviteError<E> {
             InviteError::RequestTimeout => {
                 "request_timeout: The method was called via a POST request, but the POST data was either missing or truncated."
             }
+            InviteError::FatelError => {
+                "fatal_error: The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised."
+            }
             InviteError::MalformedResponse(ref e) => e.description(),
             InviteError::Unknown(ref s) => s,
             InviteError::Client(ref inner) => inner.description(),
@@ -1310,9 +1353,221 @@ impl<E: Error> Error for InviteError<E> {
     }
 }
 
-/// Removes a user from a private channel.
+/// Joins an existing conversation.
 ///
-/// Wraps https://api.slack.com/methods/groups.kick
+/// https://api.slack.com/methods/conversations.join
+
+pub fn join<R>(
+    client: &R,
+    token: &str,
+    request: &JoinRequest,
+) -> Result<JoinResponse, JoinError<R::Error>>
+    where
+        R: SlackWebRequestSender,
+{
+
+    let params = vec![
+        Some(("token", token)),
+        Some(("name", request.name)),
+    ];
+    let params = params.into_iter().filter_map(|x| x).collect::<Vec<_>>();
+    let url = ::get_slack_url_for_method("conversations.join");
+    client
+        .send(&url, &params[..])
+        .map_err(JoinError::Client)
+        .and_then(|result| {
+            serde_json::from_str::<JoinResponse>(&result).map_err(JoinError::MalformedResponse)
+        })
+        .and_then(|o| o.into())
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct JoinRequest<'a> {
+    /// Name of channel to join
+    pub name: &'a str,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct JoinResponse {
+    pub channel: Option<::Channel>,
+    error: Option<String>,
+    #[serde(default)]
+    ok: bool,
+}
+
+impl<E: Error> Into<Result<JoinResponse, JoinError<E>>> for JoinResponse {
+    fn into(self) -> Result<JoinResponse, JoinError<E>> {
+        if self.ok {
+            Ok(self)
+        } else {
+            Err(self.error.as_ref().map(String::as_ref).unwrap_or("").into())
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum JoinError<E: Error> {
+    /// Value passed for channel was invalid.
+    ChannelNotFound,
+    /// Channel has been archived.
+    IsArchived,
+    /// This type of conversation cannot be used with this method.
+    MethodNotSupportedForChannelType,
+    /// The calling token is not granted the necessary scopes to complete this operation.
+    MissingScope,
+    /// No authentication token provided.
+    NotAuthed,
+    /// Invalid authentication token.
+    InvalidAuth,
+    /// Authentication token is for a deleted user or team.
+    AccountInactive,
+    /// Authentication token is for a deleted user or workspace or the app has been removed.
+    TokenRevoked,
+    /// The workspace token used in this request does not have the permissions necessary to complete the request.
+    NoPermission,
+    /// The workspace is undergoing an enterprise migration and will not be available until migration is complete.
+    OrgLoginRequired,
+    /// This method cannot be called by a bot user.
+    UserIsBot,
+    ///This method cannot be called by a restricted user or single channel guest.
+    UserIsRestricted,
+    /// The method was passed an argument whose name falls outside the bounds of common decency. This includes very long names and names with non-alphanumeric characters other than _. If you get this error, it is typically an indication that you have made a very malformed API call.
+    InvalidArgName,
+    /// The method was passed a PHP-style array argument (e.g. with a name like foo[7]). These are never valid with the Slack API.
+    InvalidArrayArg,
+    /// The method was called via a POST request, but the charset specified in the Content-Type header was invalid. Valid charset names are: utf-8 iso-8859-1.
+    InvalidCharset,
+    /// The method was called via a POST request with Content-Type application/x-www-form-urlencoded or multipart/form-data, but the form data was either missing or syntactically invalid.
+    InvalidFormData,
+    /// The method was called via a POST request, but the specified Content-Type was invalid. Valid types are: application/x-www-form-urlencoded multipart/form-data text/plain.
+    InvalidPostType,
+    /// The method was called via a POST request and included a data payload, but the request did not include a Content-Type header.
+    MissingPostType,
+    /// The team associated with your request is currently undergoing migration to an Enterprise Organization. Web API and other platform operations will be intermittently unavailable until the transition is complete.
+    TeamAddedToOrg,
+    /// The method was called via a POST request, but the POST data was either missing or truncated.
+    RequestTimeout,
+    /// The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised.
+    FatelError,
+    /// The response was not parseable as the expected object
+    MalformedResponse(serde_json::error::Error),
+    /// The response returned an error that was unknown to the library
+    Unknown(String),
+    /// The client had an error sending the request to Slack
+    Client(E),
+}
+
+impl<'a, E: Error> From<&'a str> for JoinError<E> {
+    fn from(s: &'a str) -> Self {
+        match s {
+            "channel_not_found" => JoinError::ChannelNotFound,
+            "is_archived" => JoinError::IsArchived,
+            "method_not_supported_for_channel_type" => JoinError::MethodNotSupportedForChannelType,
+            "missing_scope" => JoinError::MissingScope,
+            "not_authed" => JoinError::NotAuthed,
+            "invalid_auth" => JoinError::InvalidAuth,
+            "account_inactive" => JoinError::AccountInactive,
+            "token_revoked" => JoinError::TokenRevoked,
+            "no_permission" => JoinError::NoPermission,
+            "org_login_required" => JoinError::OrgLoginRequired,
+            "user_is_bot" => JoinError::UserIsBot,
+            "user_is_restricted" => JoinError::UserIsRestricted,
+            "invalid_arg_name" => JoinError::InvalidArgName,
+            "invalid_array_arg" => JoinError::InvalidArrayArg,
+            "invalid_charset" => JoinError::InvalidCharset,
+            "invalid_form_data" => JoinError::InvalidFormData,
+            "invalid_post_type" => JoinError::InvalidPostType,
+            "missing_post_type" => JoinError::MissingPostType,
+            "team_added_to_org" => JoinError::TeamAddedToOrg,
+            "request_timeout" => JoinError::RequestTimeout,
+            "fatal_error" => JoinError::FatelError,
+            _ => JoinError::Unknown(s.to_owned()),
+        }
+    }
+}
+
+impl<E: Error> fmt::Display for JoinError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
+
+impl<E: Error> Error for JoinError<E> {
+    fn description(&self) -> &str {
+        match *self {
+            JoinError::ChannelNotFound => {
+                "channel_not_found: Value passed for channel was invalid."
+            }
+            JoinError::IsArchived => "is_archived: Channel has been archived.",
+            JoinError::MethodNotSupportedForChannelType => {
+                "method_not_supported_for_channel_type: This type of conversation cannot be used with this method."
+            }
+            JoinError::MissingScope => {
+                "missing_scope: The calling token is not granted the necessary scopes to complete this operation."
+            }
+            JoinError::NotAuthed => "not_authed: No authentication token provided.",
+            JoinError::InvalidAuth => "invalid_auth: Invalid authentication token.",
+            JoinError::AccountInactive => {
+                "account_inactive: Authentication token is for a deleted user or team."
+            }
+            JoinError::TokenRevoked => {
+                "token_revoked: Authentication token is for a deleted user or workspace or the app has been removed."
+            }
+            JoinError::NoPermission => {
+                "no_permission: The workspace token used in this request does not have the permissions necessary to complete the request."
+            }
+            JoinError::OrgLoginRequired => {
+                "org_login_required: The workspace is undergoing an enterprise migration and will not be available until migration is complete."
+            }
+            JoinError::UserIsBot => "user_is_bot: This method cannot be called by a bot user.",
+            JoinError::UserIsRestricted => {
+                "user_is_restricted: This method cannot be called by a restricted user or single channel guest."
+            }
+            JoinError::InvalidArgName => {
+                "invalid_arg_name: The method was passed an argument whose name falls outside the bounds of common decency. This includes very long names and names with non-alphanumeric characters other than _. If you get this error, it is typically an indication that you have made a very malformed API call."
+            }
+            JoinError::InvalidArrayArg => {
+                "invalid_array_arg: The method was passed a PHP-style array argument (e.g. with a name like foo[7]). These are never valid with the Slack API."
+            }
+            JoinError::InvalidCharset => {
+                "invalid_charset: The method was called via a POST request, but the charset specified in the Content-Type header was invalid. Valid charset names are: utf-8 iso-8859-1."
+            }
+            JoinError::InvalidFormData => {
+                "invalid_form_data: The method was called via a POST request with Content-Type application/x-www-form-urlencoded or multipart/form-data, but the form data was either missing or syntactically invalid."
+            }
+            JoinError::InvalidPostType => {
+                "invalid_post_type: The method was called via a POST request, but the specified Content-Type was invalid. Valid types are: application/x-www-form-urlencoded multipart/form-data text/plain."
+            }
+            JoinError::MissingPostType => {
+                "missing_post_type: The method was called via a POST request and included a data payload, but the request did not include a Content-Type header."
+            }
+            JoinError::TeamAddedToOrg => {
+                "team_added_to_org: The team associated with your request is currently undergoing migration to an Enterprise Organization. Web API and other platform operations will be intermittently unavailable until the transition is complete."
+            }
+            JoinError::RequestTimeout => {
+                "request_timeout: The method was called via a POST request, but the POST data was either missing or truncated."
+            }
+            JoinError::FatelError => {
+                "fatal_error: The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised."
+            }
+            JoinError::MalformedResponse(ref e) => e.description(),
+            JoinError::Unknown(ref s) => s,
+            JoinError::Client(ref inner) => inner.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            JoinError::MalformedResponse(ref e) => Some(e),
+            JoinError::Client(ref inner) => Some(inner),
+            _ => None,
+        }
+    }
+}
+
+/// Removes a user from a conversation.
+///
+/// Wraps https://api.slack.com/methods/conversations.kick
 
 pub fn kick<R>(
     client: &R,
@@ -1373,8 +1628,14 @@ pub enum KickError<E: Error> {
     /// You can't remove yourself from a group
     CantKickSelf,
     /// User or caller were are not in the group
-    NotInGroup,
+    NotInChannel,
     /// A team preference prevents the authenticated user from kicking.
+    CantKickFromGeneral,
+    /// This type of conversation cannot be used with this method.
+    MethodNotSupportedForChannelType,
+    /// The calling token is not granted the necessary scopes to complete this operation.
+    MissingScope,
+    /// User cannot be removed from #general.
     RestrictedAction,
     /// No authentication token provided.
     NotAuthed,
@@ -1402,6 +1663,8 @@ pub enum KickError<E: Error> {
     TeamAddedToOrg,
     /// The method was called via a POST request, but the POST data was either missing or truncated.
     RequestTimeout,
+    /// The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised.
+    FatelError,
     /// The response was not parseable as the expected object
     MalformedResponse(serde_json::error::Error),
     /// The response returned an error that was unknown to the library
@@ -1416,7 +1679,10 @@ impl<'a, E: Error> From<&'a str> for KickError<E> {
             "channel_not_found" => KickError::ChannelNotFound,
             "user_not_found" => KickError::UserNotFound,
             "cant_kick_self" => KickError::CantKickSelf,
-            "not_in_group" => KickError::NotInGroup,
+            "not_in_channel" => KickError::NotInChannel,
+            "cant_kick_from_general" => KickError::CantKickFromGeneral,
+            "method_not_supported_for_channel_type" => KickError::MethodNotSupportedForChannelType,
+            "missing_scope" => KickError::MissingScope,
             "restricted_action" => KickError::RestrictedAction,
             "not_authed" => KickError::NotAuthed,
             "invalid_auth" => KickError::InvalidAuth,
@@ -1431,6 +1697,7 @@ impl<'a, E: Error> From<&'a str> for KickError<E> {
             "missing_post_type" => KickError::MissingPostType,
             "team_added_to_org" => KickError::TeamAddedToOrg,
             "request_timeout" => KickError::RequestTimeout,
+            "fatal_error" => KickError::FatelError,
             _ => KickError::Unknown(s.to_owned()),
         }
     }
@@ -1450,7 +1717,14 @@ impl<E: Error> Error for KickError<E> {
             }
             KickError::UserNotFound => "user_not_found: Value passed for user was invalid.",
             KickError::CantKickSelf => "cant_kick_self: You can't remove yourself from a group",
-            KickError::NotInGroup => "not_in_group: User or caller were are not in the group",
+            KickError::NotInChannel => "not_in_channel: User was not in the channel.",
+            KickError::CantKickFromGeneral => "cant_kick_from_general: User cannot be removed from #general.",
+            KickError::MethodNotSupportedForChannelType => {
+                "method_not_supported_for_channel_type: This type of conversation cannot be used with this method."
+            }
+            KickError::MissingScope => {
+                "missing_scope: The calling token is not granted the necessary scopes to complete this operation."
+            }
             KickError::RestrictedAction => {
                 "restricted_action: A team preference prevents the authenticated user from kicking."
             }
@@ -1487,6 +1761,9 @@ impl<E: Error> Error for KickError<E> {
             KickError::RequestTimeout => {
                 "request_timeout: The method was called via a POST request, but the POST data was either missing or truncated."
             }
+            KickError::FatelError => {
+                "fatal_error: The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised."
+            }
             KickError::MalformedResponse(ref e) => e.description(),
             KickError::Unknown(ref s) => s,
             KickError::Client(ref inner) => inner.description(),
@@ -1504,7 +1781,7 @@ impl<E: Error> Error for KickError<E> {
 
 /// Leaves a private channel.
 ///
-/// Wraps https://api.slack.com/methods/groups.leave
+/// Wraps https://api.slack.com/methods/conversations.leave
 
 pub fn leave<R>(
     client: &R,
@@ -1536,6 +1813,7 @@ pub struct LeaveRequest<'a> {
 #[derive(Clone, Debug, Deserialize)]
 pub struct LeaveResponse {
     error: Option<String>,
+    not_in_channel: Option<bool>,
     #[serde(default)]
     ok: bool,
 }
@@ -1556,12 +1834,24 @@ pub enum LeaveError<E: Error> {
     ChannelNotFound,
     /// Group has been archived.
     IsArchived,
+    /// This type of conversation cannot be used with this method.
+    MethodNotSupportedForChannelType,
+    /// The calling token is not granted the necessary scopes to complete this operation.
+    MissingScope,
+    /// Authenticated user cannot leave the general channel
+    CantLeaveGeneral,
     /// No authentication token provided.
     NotAuthed,
     /// Invalid authentication token.
     InvalidAuth,
     /// Authentication token is for a deleted user or team.
     AccountInactive,
+    /// Authentication token is for a deleted user or workspace or the app has been removed.
+    TokenRevoked,
+    /// The workspace token used in this request does not have the permissions necessary to complete the request.
+    NoPermission,
+    /// The workspace is undergoing an enterprise migration and will not be available until migration is complete.
+    OrgLoginRequired,
     /// This method cannot be called by a bot user.
     UserIsBot,
     /// This method cannot be called by a single channel guest.
@@ -1582,6 +1872,8 @@ pub enum LeaveError<E: Error> {
     TeamAddedToOrg,
     /// The method was called via a POST request, but the POST data was either missing or truncated.
     RequestTimeout,
+    /// The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised.
+    FatelError,
     /// The response was not parseable as the expected object
     MalformedResponse(serde_json::error::Error),
     /// The response returned an error that was unknown to the library
@@ -1595,9 +1887,15 @@ impl<'a, E: Error> From<&'a str> for LeaveError<E> {
         match s {
             "channel_not_found" => LeaveError::ChannelNotFound,
             "is_archived" => LeaveError::IsArchived,
+            "method_not_supported_for_channel_type" => LeaveError::MethodNotSupportedForChannelType,
+            "missing_scope" => LeaveError::MissingScope,
+            "cant_leave_general" => LeaveError::CantLeaveGeneral,
             "not_authed" => LeaveError::NotAuthed,
             "invalid_auth" => LeaveError::InvalidAuth,
             "account_inactive" => LeaveError::AccountInactive,
+            "token_revoked" => LeaveError::TokenRevoked,
+            "no_permission" => LeaveError::NoPermission,
+            "org_login_required" => LeaveError::OrgLoginRequired,
             "user_is_bot" => LeaveError::UserIsBot,
             "user_is_ultra_restricted" => LeaveError::UserIsUltraRestricted,
             "invalid_arg_name" => LeaveError::InvalidArgName,
@@ -1608,6 +1906,7 @@ impl<'a, E: Error> From<&'a str> for LeaveError<E> {
             "missing_post_type" => LeaveError::MissingPostType,
             "team_added_to_org" => LeaveError::TeamAddedToOrg,
             "request_timeout" => LeaveError::RequestTimeout,
+            "fatal_error" => LeaveError::FatelError,
             _ => LeaveError::Unknown(s.to_owned()),
         }
     }
@@ -1627,9 +1926,25 @@ impl<E: Error> Error for LeaveError<E> {
             }
             LeaveError::IsArchived => "is_archived: Group has been archived.",
             LeaveError::NotAuthed => "not_authed: No authentication token provided.",
+            LeaveError::MethodNotSupportedForChannelType => {
+                "method_not_supported_for_channel_type: This type of conversation cannot be used with this method."
+            }
+            LeaveError::MissingScope => {
+                "missing_scope: The calling token is not granted the necessary scopes to complete this operation."
+            }
             LeaveError::InvalidAuth => "invalid_auth: Invalid authentication token.",
+            LeaveError::CantLeaveGeneral => "cant_leave_general: Authenticated user cannot leave the general channel",
             LeaveError::AccountInactive => {
                 "account_inactive: Authentication token is for a deleted user or team."
+            }
+            LeaveError::TokenRevoked => {
+                "token_revoked: Authentication token is for a deleted user or workspace or the app has been removed."
+            }
+            LeaveError::NoPermission => {
+                "no_permission: The workspace token used in this request does not have the permissions necessary to complete the request."
+            }
+            LeaveError::OrgLoginRequired => {
+                "org_login_required: The workspace is undergoing an enterprise migration and will not be available until migration is complete."
             }
             LeaveError::UserIsBot => "user_is_bot: This method cannot be called by a bot user.",
             LeaveError::UserIsUltraRestricted => {
@@ -1659,6 +1974,9 @@ impl<E: Error> Error for LeaveError<E> {
             LeaveError::RequestTimeout => {
                 "request_timeout: The method was called via a POST request, but the POST data was either missing or truncated."
             }
+            LeaveError::FatelError => {
+                "fatal_error: The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised."
+            }
             LeaveError::MalformedResponse(ref e) => e.description(),
             LeaveError::Unknown(ref s) => s,
             LeaveError::Client(ref inner) => inner.description(),
@@ -1674,9 +1992,9 @@ impl<E: Error> Error for LeaveError<E> {
     }
 }
 
-/// Lists private channels that the calling user has access to.
+/// Lists all channels in a Slack team.
 ///
-/// Wraps https://api.slack.com/methods/groups.list
+/// Wraps https://api.slack.com/methods/conversations.list
 
 pub fn list<R>(
     client: &R,
@@ -1687,11 +2005,15 @@ where
     R: SlackWebRequestSender,
 {
 
+    let limit = request.limit.map(|limit| limit.to_string());
     let params = vec![
         Some(("token", token)),
+        request.cursor.map(|cursor| ("cursor", cursor)),
         request.exclude_archived.map(|exclude_archived| {
             ("exclude_archived", if exclude_archived { "1" } else { "0" })
         }),
+        limit.as_ref().map(|limit| ("limit", &limit[..])),
+        request.types.map(|types| ("types", types)),
     ];
     let params = params.into_iter().filter_map(|x| x).collect::<Vec<_>>();
     let url = ::get_slack_url_for_method("conversations.list");
@@ -1705,15 +2027,21 @@ where
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct ListRequest {
+pub struct ListRequest<'a> {
+    /// Paginate through collections of data by setting the cursor parameter to a next_cursor attribute returned by a previous request's response_metadata. Default value fetches the first "page" of the collection. See pagination for more detail.
+    pub cursor: Option<&'a str>,
     /// Don't return archived private channels.
     pub exclude_archived: Option<bool>,
+    /// The maximum number of items to return. Fewer than the requested number of items may be returned, even if the end of the list hasn't been reached. Must be an integer no larger than 1000.
+    pub limit: Option<u32>,
+    /// Mix and match channel types by providing a comma-separated list of any combination of public_channel, private_channel, mpim, im
+    pub types: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct ListResponse {
     error: Option<String>,
-    pub groups: Option<Vec<::Group>>,
+    pub channels: Option<Vec<::Channel>>,
     #[serde(default)]
     ok: bool,
 }
@@ -1730,12 +2058,28 @@ impl<E: Error> Into<Result<ListResponse, ListError<E>>> for ListResponse {
 }
 #[derive(Debug)]
 pub enum ListError<E: Error> {
+    /// This type of conversation cannot be used with this method.
+    MethodNotSupportedForChannelType,
+    /// The calling token is not granted the necessary scopes to complete this operation.
+    MissingScope,
+    /// Value passed for type could not be used based on the method's capabilities or the permission scopes granted to the used token.
+    InvalidTypes,
+    /// Value passed for cursor was not valid or is no longer valid.
+    InvalidCursor,
+    /// Value passed for limit is not understood.
+    InvalidLimit,
     /// No authentication token provided.
     NotAuthed,
     /// Invalid authentication token.
     InvalidAuth,
     /// Authentication token is for a deleted user or team.
     AccountInactive,
+    /// Authentication token is for a deleted user or workspace or the app has been removed.
+    TokenRevoked,
+    /// The workspace token used in this request does not have the permissions necessary to complete the request.
+    NoPermission,
+    /// The workspace is undergoing an enterprise migration and will not be available until migration is complete.
+    OrgLoginRequired,
     /// The method was passed an argument whose name falls outside the bounds of common decency. This includes very long names and names with non-alphanumeric characters other than _. If you get this error, it is typically an indication that you have made a very malformed API call.
     InvalidArgName,
     /// The method was passed a PHP-style array argument (e.g. with a name like foo[7]). These are never valid with the Slack API.
@@ -1752,6 +2096,8 @@ pub enum ListError<E: Error> {
     TeamAddedToOrg,
     /// The method was called via a POST request, but the POST data was either missing or truncated.
     RequestTimeout,
+    /// The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised.
+    FatelError,
     /// The response was not parseable as the expected object
     MalformedResponse(serde_json::error::Error),
     /// The response returned an error that was unknown to the library
@@ -1763,9 +2109,17 @@ pub enum ListError<E: Error> {
 impl<'a, E: Error> From<&'a str> for ListError<E> {
     fn from(s: &'a str) -> Self {
         match s {
+            "method_not_supported_for_channel_type" => ListError::MethodNotSupportedForChannelType,
+            "missing_scope" => ListError::MissingScope,
+            "invalid_types" => ListError::InvalidTypes,
+            "invalid_cursor" => ListError::InvalidCursor,
+            "invalid_limit" => ListError::InvalidLimit,
             "not_authed" => ListError::NotAuthed,
             "invalid_auth" => ListError::InvalidAuth,
             "account_inactive" => ListError::AccountInactive,
+            "token_revoked" => ListError::TokenRevoked,
+            "no_permission" => ListError::NoPermission,
+            "org_login_required" => ListError::OrgLoginRequired,
             "invalid_arg_name" => ListError::InvalidArgName,
             "invalid_array_arg" => ListError::InvalidArrayArg,
             "invalid_charset" => ListError::InvalidCharset,
@@ -1774,6 +2128,7 @@ impl<'a, E: Error> From<&'a str> for ListError<E> {
             "missing_post_type" => ListError::MissingPostType,
             "team_added_to_org" => ListError::TeamAddedToOrg,
             "request_timeout" => ListError::RequestTimeout,
+            "fatal_error" => ListError::FatelError,
             _ => ListError::Unknown(s.to_owned()),
         }
     }
@@ -1788,10 +2143,28 @@ impl<E: Error> fmt::Display for ListError<E> {
 impl<E: Error> Error for ListError<E> {
     fn description(&self) -> &str {
         match *self {
+            ListError::MethodNotSupportedForChannelType => {
+                "method_not_supported_for_channel_type: This type of conversation cannot be used with this method."
+            }
+            ListError::MissingScope => {
+                "missing_scope: The calling token is not granted the necessary scopes to complete this operation."
+            }
+            ListError::InvalidTypes => "invalid_types: Value passed for type could not be used based on the method's capabilities or the permission scopes granted to the used token.",
+            ListError::InvalidCursor => "invalid_cursor: Value passed for cursor was not valid or is no longer valid.",
+            ListError::InvalidLimit => "invalid_limit: Value passed for limit is not understood.",
             ListError::NotAuthed => "not_authed: No authentication token provided.",
             ListError::InvalidAuth => "invalid_auth: Invalid authentication token.",
             ListError::AccountInactive => {
                 "account_inactive: Authentication token is for a deleted user or team."
+            }
+            ListError::TokenRevoked => {
+                "token_revoked: Authentication token is for a deleted user or workspace or the app has been removed."
+            }
+            ListError::NoPermission => {
+                "no_permission: The workspace token used in this request does not have the permissions necessary to complete the request."
+            }
+            ListError::OrgLoginRequired => {
+                "org_login_required: The workspace is undergoing an enterprise migration and will not be available until migration is complete."
             }
             ListError::InvalidArgName => {
                 "invalid_arg_name: The method was passed an argument whose name falls outside the bounds of common decency. This includes very long names and names with non-alphanumeric characters other than _. If you get this error, it is typically an indication that you have made a very malformed API call."
@@ -1817,6 +2190,9 @@ impl<E: Error> Error for ListError<E> {
             ListError::RequestTimeout => {
                 "request_timeout: The method was called via a POST request, but the POST data was either missing or truncated."
             }
+            ListError::FatelError => {
+                "fatal_error: The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised."
+            }
             ListError::MalformedResponse(ref e) => e.description(),
             ListError::Unknown(ref s) => s,
             ListError::Client(ref inner) => inner.description(),
@@ -1832,6 +2208,223 @@ impl<E: Error> Error for ListError<E> {
     }
 }
 
+
+/// Retrieve members of a conversation.
+///
+/// Wraps https://api.slack.com/methods/conversations.members
+
+pub fn members<R>(
+    client: &R,
+    token: &str,
+    request: &MembersRequest,
+) -> Result<MembersResponse, MembersError<R::Error>>
+where
+    R: SlackWebRequestSender,
+{
+
+    let limit = request.limit.map(|limit| limit.to_string());
+    let params = vec![
+        Some(("token", token)),
+        Some(("channel", request.channel)),
+        request.cursor.map(|cursor| ("cursor", cursor)),
+        limit.as_ref().map(|limit| ("limit", &limit[..])),
+    ];
+    let params = params.into_iter().filter_map(|x| x).collect::<Vec<_>>();
+    let url = ::get_slack_url_for_method("conversations.list");
+    client
+        .send(&url, &params[..])
+        .map_err(MembersError::Client)
+        .and_then(|result| {
+            serde_json::from_str::<MembersResponse>(&result).map_err(MembersError::MalformedResponse)
+        })
+        .and_then(|o| o.into())
+}
+
+#[derive(Clone, Default, Debug)]
+pub struct MembersRequest<'a> {
+    /// ID of the conversation to retrieve members for
+    pub channel: &'a str,
+    /// Paginate through collections of data by setting the cursor parameter to a next_cursor attribute returned by a previous request's response_metadata. Default value fetches the first "page" of the collection. See pagination for more detail.
+    pub cursor: Option<&'a str>,
+    /// The maximum number of items to return. Fewer than the requested number of items may be returned, even if the end of the list hasn't been reached. Must be an integer no larger than 1000.
+    pub limit: Option<u32>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct MembersResponse {
+    error: Option<String>,
+    pub members: Option<Vec<String>>,
+    #[serde(default)]
+    ok: bool,
+}
+
+
+impl<E: Error> Into<Result<MembersResponse, MembersError<E>>> for MembersResponse {
+    fn into(self) -> Result<MembersResponse, MembersError<E>> {
+        if self.ok {
+            Ok(self)
+        } else {
+            Err(self.error.as_ref().map(String::as_ref).unwrap_or("").into())
+        }
+    }
+}
+#[derive(Debug)]
+pub enum MembersError<E: Error> {
+    /// This type of conversation cannot be used with this method.
+    MethodNotSupportedForChannelType,
+    /// The calling token is not granted the necessary scopes to complete this operation.
+    MissingScope,
+    /// Value passed for channel was invalid.
+    ChannelNotFound,
+    /// Value passed for limit is not understood.
+    InvalidLimit,
+    /// Value passed for cursor was not valid or is no longer valid.
+    InvalidCursor,
+    /// Failed to fetch members for the conversation.
+    FetchMembersFailed,
+    /// No authentication token provided.
+    NotAuthed,
+    /// Invalid authentication token.
+    InvalidAuth,
+    /// Authentication token is for a deleted user or team.
+    AccountInactive,
+    /// Authentication token is for a deleted user or workspace or the app has been removed.
+    TokenRevoked,
+    /// The workspace token used in this request does not have the permissions necessary to complete the request.
+    NoPermission,
+    /// The workspace is undergoing an enterprise migration and will not be available until migration is complete.
+    OrgLoginRequired,
+    /// The method was passed an argument whose name falls outside the bounds of common decency. This includes very long names and names with non-alphanumeric characters other than _. If you get this error, it is typically an indication that you have made a very malformed API call.
+    InvalidArgName,
+    /// The method was passed a PHP-style array argument (e.g. with a name like foo[7]). These are never valid with the Slack API.
+    InvalidArrayArg,
+    /// The method was called via a POST request, but the charset specified in the Content-Type header was invalid. Valid charset names are: utf-8 iso-8859-1.
+    InvalidCharset,
+    /// The method was called via a POST request with Content-Type application/x-www-form-urlencoded or multipart/form-data, but the form data was either missing or syntactically invalid.
+    InvalidFormData,
+    /// The method was called via a POST request, but the specified Content-Type was invalid. Valid types are: application/x-www-form-urlencoded multipart/form-data text/plain.
+    InvalidPostType,
+    /// The method was called via a POST request and included a data payload, but the request did not include a Content-Type header.
+    MissingPostType,
+    /// The team associated with your request is currently undergoing migration to an Enterprise Organization. Web API and other platform operations will be intermittently unavailable until the transition is complete.
+    TeamAddedToOrg,
+    /// The method was called via a POST request, but the POST data was either missing or truncated.
+    RequestTimeout,
+    /// The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised.
+    FatelError,
+    /// The response was not parseable as the expected object
+    MalformedResponse(serde_json::error::Error),
+    /// The response returned an error that was unknown to the library
+    Unknown(String),
+    /// The client had an error sending the request to Slack
+    Client(E),
+}
+
+impl<'a, E: Error> From<&'a str> for MembersError<E> {
+    fn from(s: &'a str) -> Self {
+        match s {
+            "method_not_supported_for_channel_type" => MembersError::MethodNotSupportedForChannelType,
+            "missing_scope" => MembersError::MissingScope,
+            "channel_not_found" => MembersError::ChannelNotFound,
+            "invalid_limit" => MembersError::InvalidLimit,
+            "invalid_cursor" => MembersError::InvalidCursor,
+            "fetch_members_failed" => MembersError::FetchMembersFailed,
+            "not_authed" => MembersError::NotAuthed,
+            "invalid_auth" => MembersError::InvalidAuth,
+            "account_inactive" => MembersError::AccountInactive,
+            "token_revoked" => MembersError::TokenRevoked,
+            "no_permission" => MembersError::NoPermission,
+            "org_login_required" => MembersError::OrgLoginRequired,
+            "invalid_arg_name" => MembersError::InvalidArgName,
+            "invalid_array_arg" => MembersError::InvalidArrayArg,
+            "invalid_charset" => MembersError::InvalidCharset,
+            "invalid_form_data" => MembersError::InvalidFormData,
+            "invalid_post_type" => MembersError::InvalidPostType,
+            "missing_post_type" => MembersError::MissingPostType,
+            "team_added_to_org" => MembersError::TeamAddedToOrg,
+            "request_timeout" => MembersError::RequestTimeout,
+            "fatal_error" => MembersError::FatelError,
+            _ => MembersError::Unknown(s.to_owned()),
+        }
+    }
+}
+
+impl<E: Error> fmt::Display for MembersError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
+
+impl<E: Error> Error for MembersError<E> {
+    fn description(&self) -> &str {
+        match *self {
+            MembersError::MethodNotSupportedForChannelType => {
+                "method_not_supported_for_channel_type: This type of conversation cannot be used with this method."
+            }
+            MembersError::MissingScope => {
+                "missing_scope: The calling token is not granted the necessary scopes to complete this operation."
+            }
+            MembersError::ChannelNotFound => "channel_not_found: Value passed for channel was invalid.",
+            MembersError::InvalidLimit => "invalid_limit: Value passed for limit is not understood.",
+            MembersError::InvalidCursor => "invalid_cursor: Value passed for cursor was not valid or is no longer valid.",
+            MembersError::FetchMembersFailed => "fetch_members_failed: Failed to fetch members for the conversation.",
+            MembersError::NotAuthed => "not_authed: No authentication token provided.",
+            MembersError::InvalidAuth => "invalid_auth: Invalid authentication token.",
+            MembersError::AccountInactive => {
+                "account_inactive: Authentication token is for a deleted user or team."
+            }
+            MembersError::TokenRevoked => {
+                "token_revoked: Authentication token is for a deleted user or workspace or the app has been removed."
+            }
+            MembersError::NoPermission => {
+                "no_permission: The workspace token used in this request does not have the permissions necessary to complete the request."
+            }
+            MembersError::OrgLoginRequired => {
+                "org_login_required: The workspace is undergoing an enterprise migration and will not be available until migration is complete."
+            }
+            MembersError::InvalidArgName => {
+                "invalid_arg_name: The method was passed an argument whose name falls outside the bounds of common decency. This includes very long names and names with non-alphanumeric characters other than _. If you get this error, it is typically an indication that you have made a very malformed API call."
+            }
+            MembersError::InvalidArrayArg => {
+                "invalid_array_arg: The method was passed a PHP-style array argument (e.g. with a name like foo[7]). These are never valid with the Slack API."
+            }
+            MembersError::InvalidCharset => {
+                "invalid_charset: The method was called via a POST request, but the charset specified in the Content-Type header was invalid. Valid charset names are: utf-8 iso-8859-1."
+            }
+            MembersError::InvalidFormData => {
+                "invalid_form_data: The method was called via a POST request with Content-Type application/x-www-form-urlencoded or multipart/form-data, but the form data was either missing or syntactically invalid."
+            }
+            MembersError::InvalidPostType => {
+                "invalid_post_type: The method was called via a POST request, but the specified Content-Type was invalid. Valid types are: application/x-www-form-urlencoded multipart/form-data text/plain."
+            }
+            MembersError::MissingPostType => {
+                "missing_post_type: The method was called via a POST request and included a data payload, but the request did not include a Content-Type header."
+            }
+            MembersError::TeamAddedToOrg => {
+                "team_added_to_org: The team associated with your request is currently undergoing migration to an Enterprise Organization. Web API and other platform operations will be intermittently unavailable until the transition is complete."
+            }
+            MembersError::RequestTimeout => {
+                "request_timeout: The method was called via a POST request, but the POST data was either missing or truncated."
+            }
+            MembersError::FatelError => {
+                "fatal_error: The server could not complete your operation(s) without encountering a catastrophic error. It's possible some aspect of the operation succeeded before the error was raised."
+            }
+            MembersError::MalformedResponse(ref e) => e.description(),
+            MembersError::Unknown(ref s) => s,
+            MembersError::Client(ref inner) => inner.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            MembersError::MalformedResponse(ref e) => Some(e),
+            MembersError::Client(ref inner) => Some(inner),
+            _ => None,
+        }
+    }
+}
+
+/*
 /// Sets the read cursor in a private channel.
 ///
 /// Wraps https://api.slack.com/methods/groups.mark
