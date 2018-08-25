@@ -231,7 +231,7 @@ pub fn me_message<R>(client: &R,
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct MeMessageRequest<'a> {
     /// Channel to send message to. Can be a public channel, private group or IM channel. Can be an encoded ID, or a name.
     pub channel: &'a str,
@@ -440,7 +440,7 @@ pub fn post_message<R>(client: &R,
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct PostMessageRequest<'a> {
     /// Channel, private group, or IM channel to send message to. Can be an encoded ID, or a name. See below for more details.
     pub channel: &'a str,
@@ -662,7 +662,7 @@ pub fn update<R>(client: &R,
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct UpdateRequest<'a> {
     /// Timestamp of the message to be updated.
     pub ts: &'a str,
