@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -29,7 +30,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ListResponse {
     pub emoji: Option<HashMap<String, bool>>,
     error: Option<String>,
@@ -77,6 +78,34 @@ pub enum ListError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for ListError<E> {}
+
+impl<E: Error> PartialEq for ListError<E> {
+    fn eq(&self, other: &ListError<E>) -> bool {
+        match &self {
+            ListError::MalformedResponse(e) => {
+                match other {
+                    ListError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            ListError::Unknown(s) => {
+                match other {
+                    ListError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            ListError::Client(e) => {
+                match other {
+                    ListError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<ListError<E>>(&self) == discriminant::<ListError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for ListError<E> {

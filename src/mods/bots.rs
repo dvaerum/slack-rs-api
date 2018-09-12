@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -35,13 +36,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct InfoRequest<'a> {
     /// Bot user to get info on
     pub bot: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponse {
     pub bot: Option<InfoResponseBot>,
     error: Option<String>,
@@ -49,7 +50,7 @@ pub struct InfoResponse {
     ok: bool,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponseBot {
     pub app_id: Option<String>,
     pub deleted: Option<bool>,
@@ -58,7 +59,7 @@ pub struct InfoResponseBot {
     pub name: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponseBotIcons {
     pub image_36: Option<String>,
     pub image_48: Option<String>,
@@ -109,6 +110,34 @@ pub enum InfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for InfoError<E> {}
+
+impl<E: Error> PartialEq for InfoError<E> {
+    fn eq(&self, other: &InfoError<E>) -> bool {
+        match &self {
+            InfoError::MalformedResponse(e) => {
+                match other {
+                    InfoError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            InfoError::Unknown(s) => {
+                match other {
+                    InfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            InfoError::Client(e) => {
+                match other {
+                    InfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<InfoError<E>>(&self) == discriminant::<InfoError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for InfoError<E> {

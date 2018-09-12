@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -36,13 +37,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct DeleteRequest<'a> {
     /// ID of file to delete.
     pub file: &'a str,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct DeleteResponse {
     error: Option<String>,
     #[serde(default)]
@@ -95,6 +96,34 @@ pub enum DeleteError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for DeleteError<E> {}
+
+impl<E: Error> PartialEq for DeleteError<E> {
+    fn eq(&self, other: &DeleteError<E>) -> bool {
+        match &self {
+            DeleteError::MalformedResponse(e) => {
+                match other {
+                    DeleteError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            DeleteError::Unknown(s) => {
+                match other {
+                    DeleteError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            DeleteError::Client(e) => {
+                match other {
+                    DeleteError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<DeleteError<E>>(&self) == discriminant::<DeleteError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for DeleteError<E> {
@@ -210,7 +239,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct InfoRequest<'a> {
     /// Specify a file by providing its ID.
     pub file: &'a str,
@@ -220,7 +249,7 @@ pub struct InfoRequest<'a> {
     pub page: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponse {
     pub comments: Option<Vec<::FileComment>>,
     error: Option<String>,
@@ -274,6 +303,34 @@ pub enum InfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for InfoError<E> {}
+
+impl<E: Error> PartialEq for InfoError<E> {
+    fn eq(&self, other: &InfoError<E>) -> bool {
+        match &self {
+            InfoError::MalformedResponse(e) => {
+                match other {
+                    InfoError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            InfoError::Unknown(s) => {
+                match other {
+                    InfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            InfoError::Client(e) => {
+                match other {
+                    InfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<InfoError<E>>(&self) == discriminant::<InfoError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for InfoError<E> {
@@ -389,7 +446,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct ListRequest<'a> {
     /// Filter files created by a single user.
     pub user: Option<&'a str>,
@@ -419,7 +476,7 @@ pub struct ListRequest<'a> {
     pub page: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ListResponse {
     error: Option<String>,
     pub files: Option<Vec<::File>>,
@@ -474,6 +531,34 @@ pub enum ListError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for ListError<E> {}
+
+impl<E: Error> PartialEq for ListError<E> {
+    fn eq(&self, other: &ListError<E>) -> bool {
+        match &self {
+            ListError::MalformedResponse(e) => {
+                match other {
+                    ListError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            ListError::Unknown(s) => {
+                match other {
+                    ListError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            ListError::Client(e) => {
+                match other {
+                    ListError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<ListError<E>>(&self) == discriminant::<ListError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for ListError<E> {
@@ -580,13 +665,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct RevokePublicURLRequest<'a> {
     /// File to revoke
     pub file: &'a str,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct RevokePublicURLResponse {
     error: Option<String>,
     pub file: Option<::File>,
@@ -641,6 +726,39 @@ pub enum RevokePublicURLError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for RevokePublicURLError<E> {}
+
+impl<E: Error> PartialEq for RevokePublicURLError<E> {
+    fn eq(&self, other: &RevokePublicURLError<E>) -> bool {
+        match &self {
+            RevokePublicURLError::MalformedResponse(e) => {
+                match other {
+                    RevokePublicURLError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            RevokePublicURLError::Unknown(s) => {
+                match other {
+                    RevokePublicURLError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            RevokePublicURLError::Client(e) => {
+                match other {
+                    RevokePublicURLError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<RevokePublicURLError<E>>(&self) ==
+                    discriminant::<RevokePublicURLError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for RevokePublicURLError<E> {
@@ -753,13 +871,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct SharedPublicURLRequest<'a> {
     /// File to share
     pub file: &'a str,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct SharedPublicURLResponse {
     error: Option<String>,
     pub file: Option<::File>,
@@ -816,6 +934,39 @@ pub enum SharedPublicURLError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for SharedPublicURLError<E> {}
+
+impl<E: Error> PartialEq for SharedPublicURLError<E> {
+    fn eq(&self, other: &SharedPublicURLError<E>) -> bool {
+        match &self {
+            SharedPublicURLError::MalformedResponse(e) => {
+                match other {
+                    SharedPublicURLError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            SharedPublicURLError::Unknown(s) => {
+                match other {
+                    SharedPublicURLError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            SharedPublicURLError::Client(e) => {
+                match other {
+                    SharedPublicURLError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<SharedPublicURLError<E>>(&self) ==
+                    discriminant::<SharedPublicURLError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for SharedPublicURLError<E> {

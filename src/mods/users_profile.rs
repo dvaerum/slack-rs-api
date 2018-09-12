@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -41,7 +42,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct GetRequest<'a> {
     /// User to retrieve profile info for
     pub user: Option<&'a str>,
@@ -49,7 +50,7 @@ pub struct GetRequest<'a> {
     pub include_labels: Option<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GetResponse {
     error: Option<String>,
     #[serde(default)]
@@ -101,6 +102,34 @@ pub enum GetError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for GetError<E> {}
+
+impl<E: Error> PartialEq for GetError<E> {
+    fn eq(&self, other: &GetError<E>) -> bool {
+        match &self {
+            GetError::MalformedResponse(e) => {
+                match other {
+                    GetError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            GetError::Unknown(s) => {
+                match other {
+                    GetError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            GetError::Client(e) => {
+                match other {
+                    GetError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<GetError<E>>(&self) == discriminant::<GetError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for GetError<E> {
@@ -210,7 +239,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct SetRequest<'a> {
     /// ID of user to change. This argument may only be specified by team admins on paid teams.
     pub user: Option<&'a str>,
@@ -222,7 +251,7 @@ pub struct SetRequest<'a> {
     pub value: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct SetResponse {
     error: Option<String>,
     #[serde(default)]
@@ -284,6 +313,34 @@ pub enum SetError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for SetError<E> {}
+
+impl<E: Error> PartialEq for SetError<E> {
+    fn eq(&self, other: &SetError<E>) -> bool {
+        match &self {
+            SetError::MalformedResponse(e) => {
+                match other {
+                    SetError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            SetError::Unknown(s) => {
+                match other {
+                    SetError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            SetError::Client(e) => {
+                match other {
+                    SetError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<SetError<E>>(&self) == discriminant::<SetError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for SetError<E> {

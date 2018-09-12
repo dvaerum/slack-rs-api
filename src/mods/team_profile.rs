@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -40,13 +41,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct GetRequest<'a> {
     /// Filter by visibility.
     pub visibility: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GetResponse {
     error: Option<String>,
     #[serde(default)]
@@ -54,12 +55,12 @@ pub struct GetResponse {
     pub profile: Option<GetResponseProfile>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GetResponseProfile {
     pub fields: Option<Vec<GetResponseProfileField>>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GetResponseProfileField {
     pub hint: Option<String>,
     pub id: Option<String>,
@@ -114,6 +115,34 @@ pub enum GetError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for GetError<E> {}
+
+impl<E: Error> PartialEq for GetError<E> {
+    fn eq(&self, other: &GetError<E>) -> bool {
+        match &self {
+            GetError::MalformedResponse(e) => {
+                match other {
+                    GetError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            GetError::Unknown(s) => {
+                match other {
+                    GetError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            GetError::Client(e) => {
+                match other {
+                    GetError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<GetError<E>>(&self) == discriminant::<GetError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for GetError<E> {

@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -30,7 +31,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct EndDndResponse {
     error: Option<String>,
     #[serde(default)]
@@ -81,6 +82,34 @@ pub enum EndDndError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for EndDndError<E> {}
+
+impl<E: Error> PartialEq for EndDndError<E> {
+    fn eq(&self, other: &EndDndError<E>) -> bool {
+        match &self {
+            EndDndError::MalformedResponse(e) => {
+                match other {
+                    EndDndError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            EndDndError::Unknown(s) => {
+                match other {
+                    EndDndError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            EndDndError::Client(e) => {
+                match other {
+                    EndDndError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<EndDndError<E>>(&self) == discriminant::<EndDndError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for EndDndError<E> {
@@ -182,12 +211,12 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct EndSnoozeResponse {
     pub dnd_enabled: Option<bool>,
     error: Option<String>,
-    pub next_dnd_end_ts: Option<f32>,
-    pub next_dnd_start_ts: Option<f32>,
+    pub next_dnd_end_ts: Option<String>,
+    pub next_dnd_start_ts: Option<String>,
     #[serde(default)]
     ok: bool,
     pub snooze_enabled: Option<bool>,
@@ -239,6 +268,39 @@ pub enum EndSnoozeError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for EndSnoozeError<E> {}
+
+impl<E: Error> PartialEq for EndSnoozeError<E> {
+    fn eq(&self, other: &EndSnoozeError<E>) -> bool {
+        match &self {
+            EndSnoozeError::MalformedResponse(e) => {
+                match other {
+                    EndSnoozeError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            EndSnoozeError::Unknown(s) => {
+                match other {
+                    EndSnoozeError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            EndSnoozeError::Client(e) => {
+                match other {
+                    EndSnoozeError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<EndSnoozeError<E>>(&self) ==
+                    discriminant::<EndSnoozeError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for EndSnoozeError<E> {
@@ -351,23 +413,23 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct InfoRequest<'a> {
     /// User to fetch status for (defaults to current user)
     pub user: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponse {
     pub dnd_enabled: Option<bool>,
     error: Option<String>,
-    pub next_dnd_end_ts: Option<f32>,
-    pub next_dnd_start_ts: Option<f32>,
+    pub next_dnd_end_ts: Option<String>,
+    pub next_dnd_start_ts: Option<String>,
     #[serde(default)]
     ok: bool,
     pub snooze_enabled: Option<bool>,
-    pub snooze_endtime: Option<f32>,
-    pub snooze_remaining: Option<f32>,
+    pub snooze_endtime: Option<String>,
+    pub snooze_remaining: Option<String>,
 }
 
 
@@ -412,6 +474,34 @@ pub enum InfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for InfoError<E> {}
+
+impl<E: Error> PartialEq for InfoError<E> {
+    fn eq(&self, other: &InfoError<E>) -> bool {
+        match &self {
+            InfoError::MalformedResponse(e) => {
+                match other {
+                    InfoError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            InfoError::Unknown(s) => {
+                match other {
+                    InfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            InfoError::Client(e) => {
+                match other {
+                    InfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<InfoError<E>>(&self) == discriminant::<InfoError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for InfoError<E> {
@@ -518,20 +608,20 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct SetSnoozeRequest {
     /// Number of minutes, from now, to snooze until.
     pub num_minutes: u32,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct SetSnoozeResponse {
     error: Option<String>,
     #[serde(default)]
     ok: bool,
     pub snooze_enabled: Option<bool>,
-    pub snooze_endtime: Option<f32>,
-    pub snooze_remaining: Option<f32>,
+    pub snooze_endtime: Option<String>,
+    pub snooze_remaining: Option<String>,
 }
 
 
@@ -580,6 +670,39 @@ pub enum SetSnoozeError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for SetSnoozeError<E> {}
+
+impl<E: Error> PartialEq for SetSnoozeError<E> {
+    fn eq(&self, other: &SetSnoozeError<E>) -> bool {
+        match &self {
+            SetSnoozeError::MalformedResponse(e) => {
+                match other {
+                    SetSnoozeError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            SetSnoozeError::Unknown(s) => {
+                match other {
+                    SetSnoozeError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            SetSnoozeError::Client(e) => {
+                match other {
+                    SetSnoozeError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<SetSnoozeError<E>>(&self) ==
+                    discriminant::<SetSnoozeError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for SetSnoozeError<E> {
@@ -694,13 +817,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct TeamInfoRequest<'a> {
     /// Comma-separated list of users to fetch Do Not Disturb status for
     pub users: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct TeamInfoResponse {
     error: Option<String>,
     #[serde(default)]
@@ -748,6 +871,38 @@ pub enum TeamInfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for TeamInfoError<E> {}
+
+impl<E: Error> PartialEq for TeamInfoError<E> {
+    fn eq(&self, other: &TeamInfoError<E>) -> bool {
+        match &self {
+            TeamInfoError::MalformedResponse(e) => {
+                match other {
+                    TeamInfoError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            TeamInfoError::Unknown(s) => {
+                match other {
+                    TeamInfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            TeamInfoError::Client(e) => {
+                match other {
+                    TeamInfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<TeamInfoError<E>>(&self) == discriminant::<TeamInfoError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for TeamInfoError<E> {

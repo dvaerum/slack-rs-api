@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -40,7 +41,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct AddRequest<'a> {
     /// The content of the reminder
     pub text: &'a str,
@@ -50,7 +51,7 @@ pub struct AddRequest<'a> {
     pub user: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AddResponse {
     error: Option<String>,
     #[serde(default)]
@@ -112,6 +113,34 @@ pub enum AddError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for AddError<E> {}
+
+impl<E: Error> PartialEq for AddError<E> {
+    fn eq(&self, other: &AddError<E>) -> bool {
+        match &self {
+            AddError::MalformedResponse(e) => {
+                match other {
+                    AddError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            AddError::Unknown(s) => {
+                match other {
+                    AddError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            AddError::Client(e) => {
+                match other {
+                    AddError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<AddError<E>>(&self) == discriminant::<AddError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for AddError<E> {
@@ -235,13 +264,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct CompleteRequest<'a> {
     /// The ID of the reminder to be marked as complete
     pub reminder: &'a str,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct CompleteResponse {
     error: Option<String>,
     #[serde(default)]
@@ -296,6 +325,38 @@ pub enum CompleteError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for CompleteError<E> {}
+
+impl<E: Error> PartialEq for CompleteError<E> {
+    fn eq(&self, other: &CompleteError<E>) -> bool {
+        match &self {
+            CompleteError::MalformedResponse(e) => {
+                match other {
+                    CompleteError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            CompleteError::Unknown(s) => {
+                match other {
+                    CompleteError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            CompleteError::Client(e) => {
+                match other {
+                    CompleteError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<CompleteError<E>>(&self) == discriminant::<CompleteError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for CompleteError<E> {
@@ -407,13 +468,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct DeleteRequest<'a> {
     /// The ID of the reminder
     pub reminder: &'a str,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct DeleteResponse {
     error: Option<String>,
     #[serde(default)]
@@ -464,6 +525,34 @@ pub enum DeleteError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for DeleteError<E> {}
+
+impl<E: Error> PartialEq for DeleteError<E> {
+    fn eq(&self, other: &DeleteError<E>) -> bool {
+        match &self {
+            DeleteError::MalformedResponse(e) => {
+                match other {
+                    DeleteError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            DeleteError::Unknown(s) => {
+                match other {
+                    DeleteError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            DeleteError::Client(e) => {
+                match other {
+                    DeleteError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<DeleteError<E>>(&self) == discriminant::<DeleteError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for DeleteError<E> {
@@ -567,13 +656,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct InfoRequest<'a> {
     /// The ID of the reminder
     pub reminder: &'a str,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponse {
     error: Option<String>,
     #[serde(default)]
@@ -625,6 +714,34 @@ pub enum InfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for InfoError<E> {}
+
+impl<E: Error> PartialEq for InfoError<E> {
+    fn eq(&self, other: &InfoError<E>) -> bool {
+        match &self {
+            InfoError::MalformedResponse(e) => {
+                match other {
+                    InfoError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            InfoError::Unknown(s) => {
+                match other {
+                    InfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            InfoError::Client(e) => {
+                match other {
+                    InfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<InfoError<E>>(&self) == discriminant::<InfoError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for InfoError<E> {
@@ -722,7 +839,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ListResponse {
     error: Option<String>,
     #[serde(default)]
@@ -772,6 +889,34 @@ pub enum ListError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for ListError<E> {}
+
+impl<E: Error> PartialEq for ListError<E> {
+    fn eq(&self, other: &ListError<E>) -> bool {
+        match &self {
+            ListError::MalformedResponse(e) => {
+                match other {
+                    ListError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            ListError::Unknown(s) => {
+                match other {
+                    ListError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            ListError::Client(e) => {
+                match other {
+                    ListError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<ListError<E>>(&self) == discriminant::<ListError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for ListError<E> {

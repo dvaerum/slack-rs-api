@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -43,7 +44,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct AccessLogsRequest {
     /// Number of items to return per page.
     pub count: Option<u32>,
@@ -53,7 +54,7 @@ pub struct AccessLogsRequest {
     pub before: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AccessLogsResponse {
     error: Option<String>,
     pub logins: Option<Vec<AccessLogsResponseLogin>>,
@@ -62,12 +63,12 @@ pub struct AccessLogsResponse {
     pub paging: Option<::Paging>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AccessLogsResponseLogin {
     pub count: Option<i32>,
     pub country: Option<String>,
-    pub date_first: Option<f32>,
-    pub date_last: Option<f32>,
+    pub date_first: Option<String>,
+    pub date_last: Option<String>,
     pub ip: Option<String>,
     pub isp: Option<String>,
     pub region: Option<String>,
@@ -122,6 +123,39 @@ pub enum AccessLogsError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for AccessLogsError<E> {}
+
+impl<E: Error> PartialEq for AccessLogsError<E> {
+    fn eq(&self, other: &AccessLogsError<E>) -> bool {
+        match &self {
+            AccessLogsError::MalformedResponse(e) => {
+                match other {
+                    AccessLogsError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            AccessLogsError::Unknown(s) => {
+                match other {
+                    AccessLogsError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            AccessLogsError::Client(e) => {
+                match other {
+                    AccessLogsError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<AccessLogsError<E>>(&self) ==
+                    discriminant::<AccessLogsError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for AccessLogsError<E> {
@@ -235,13 +269,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct BillableInfoRequest<'a> {
     /// A user to retrieve the billable information for. Defaults to all users.
     pub user: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct BillableInfoResponse {
     pub billable_info: Option<HashMap<String, bool>>,
     error: Option<String>,
@@ -293,6 +327,39 @@ pub enum BillableInfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for BillableInfoError<E> {}
+
+impl<E: Error> PartialEq for BillableInfoError<E> {
+    fn eq(&self, other: &BillableInfoError<E>) -> bool {
+        match &self {
+            BillableInfoError::MalformedResponse(e) => {
+                match other {
+                    BillableInfoError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            BillableInfoError::Unknown(s) => {
+                match other {
+                    BillableInfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            BillableInfoError::Client(e) => {
+                match other {
+                    BillableInfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<BillableInfoError<E>>(&self) ==
+                    discriminant::<BillableInfoError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for BillableInfoError<E> {
@@ -392,7 +459,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct InfoResponse {
     error: Option<String>,
     #[serde(default)]
@@ -440,6 +507,34 @@ pub enum InfoError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for InfoError<E> {}
+
+impl<E: Error> PartialEq for InfoError<E> {
+    fn eq(&self, other: &InfoError<E>) -> bool {
+        match &self {
+            InfoError::MalformedResponse(e) => {
+                match other {
+                    InfoError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            InfoError::Unknown(s) => {
+                match other {
+                    InfoError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            InfoError::Client(e) => {
+                match other {
+                    InfoError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<InfoError<E>>(&self) == discriminant::<InfoError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for InfoError<E> {
@@ -553,7 +648,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct IntegrationLogsRequest<'a> {
     /// Filter logs to this service. Defaults to all logs.
     pub service_id: Option<&'a str>,
@@ -569,7 +664,7 @@ pub struct IntegrationLogsRequest<'a> {
     pub page: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct IntegrationLogsResponse {
     error: Option<String>,
     pub logs: Option<Vec<IntegrationLogsResponseLog>>,
@@ -578,7 +673,7 @@ pub struct IntegrationLogsResponse {
     pub paging: Option<::Paging>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct IntegrationLogsResponseLog {
     pub app_id: Option<String>,
     pub app_type: Option<String>,
@@ -636,6 +731,39 @@ pub enum IntegrationLogsError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for IntegrationLogsError<E> {}
+
+impl<E: Error> PartialEq for IntegrationLogsError<E> {
+    fn eq(&self, other: &IntegrationLogsError<E>) -> bool {
+        match &self {
+            IntegrationLogsError::MalformedResponse(e) => {
+                match other {
+                    IntegrationLogsError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            IntegrationLogsError::Unknown(s) => {
+                match other {
+                    IntegrationLogsError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            IntegrationLogsError::Client(e) => {
+                match other {
+                    IntegrationLogsError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<IntegrationLogsError<E>>(&self) ==
+                    discriminant::<IntegrationLogsError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for IntegrationLogsError<E> {

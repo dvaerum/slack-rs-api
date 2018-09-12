@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -47,7 +48,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct AllRequest<'a> {
     /// Search query. May contains booleans, etc.
     pub query: &'a str,
@@ -63,7 +64,7 @@ pub struct AllRequest<'a> {
     pub page: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AllResponse {
     error: Option<String>,
     pub files: Option<AllResponseFiles>,
@@ -73,14 +74,14 @@ pub struct AllResponse {
     pub query: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AllResponseFiles {
     pub matches: Vec<::File>,
     pub paging: ::Paging,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AllResponseMessages {
     pub matches: Vec<::Message>,
     pub paging: ::Paging,
@@ -128,6 +129,34 @@ pub enum AllError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for AllError<E> {}
+
+impl<E: Error> PartialEq for AllError<E> {
+    fn eq(&self, other: &AllError<E>) -> bool {
+        match &self {
+            AllError::MalformedResponse(e) => {
+                match other {
+                    AllError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            AllError::Unknown(s) => {
+                match other {
+                    AllError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            AllError::Client(e) => {
+                match other {
+                    AllError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<AllError<E>>(&self) == discriminant::<AllError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for AllError<E> {
@@ -240,7 +269,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct FilesRequest<'a> {
     /// Search query. May contain booleans, etc.
     pub query: &'a str,
@@ -256,7 +285,7 @@ pub struct FilesRequest<'a> {
     pub page: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FilesResponse {
     error: Option<String>,
     pub files: Option<FilesResponseFiles>,
@@ -265,7 +294,7 @@ pub struct FilesResponse {
     pub query: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct FilesResponseFiles {
     pub matches: Option<Vec<::File>>,
     pub paging: Option<::Paging>,
@@ -314,6 +343,34 @@ pub enum FilesError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for FilesError<E> {}
+
+impl<E: Error> PartialEq for FilesError<E> {
+    fn eq(&self, other: &FilesError<E>) -> bool {
+        match &self {
+            FilesError::MalformedResponse(e) => {
+                match other {
+                    FilesError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            FilesError::Unknown(s) => {
+                match other {
+                    FilesError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            FilesError::Client(e) => {
+                match other {
+                    FilesError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<FilesError<E>>(&self) == discriminant::<FilesError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for FilesError<E> {
@@ -428,7 +485,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct MessagesRequest<'a> {
     /// Search query. May contains booleans, etc.
     pub query: &'a str,
@@ -444,7 +501,7 @@ pub struct MessagesRequest<'a> {
     pub page: Option<u32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessagesResponse {
     error: Option<String>,
     pub messages: Option<MessagesResponseMessages>,
@@ -453,7 +510,7 @@ pub struct MessagesResponse {
     pub query: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessagesResponseMessages {
     pub matches: Option<Vec<::Message>>,
     pub paging: Option<::Paging>,
@@ -502,6 +559,38 @@ pub enum MessagesError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for MessagesError<E> {}
+
+impl<E: Error> PartialEq for MessagesError<E> {
+    fn eq(&self, other: &MessagesError<E>) -> bool {
+        match &self {
+            MessagesError::MalformedResponse(e) => {
+                match other {
+                    MessagesError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            MessagesError::Unknown(s) => {
+                match other {
+                    MessagesError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            MessagesError::Client(e) => {
+                match other {
+                    MessagesError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => {
+                discriminant::<MessagesError<E>>(&self) == discriminant::<MessagesError<E>>(&other)
+            }
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for MessagesError<E> {

@@ -1,161 +1,21 @@
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct Bot {
-    pub app_id: Option<String>,
-    pub deleted: Option<bool>,
-    pub icons: Option<BotIcons>,
-    pub id: Option<String>,
-    pub name: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct BotIcons {
-    pub image_36: Option<String>,
-    pub image_48: Option<String>,
-    pub image_72: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Channel {
-    pub accepted_user: Option<String>,
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Mpim {
     pub created: Option<i32>,
     pub creator: Option<String>,
     pub id: Option<String>,
-    pub is_archived: Option<bool>,
-    pub is_channel: Option<bool>,
-    pub is_general: Option<bool>,
-    pub is_member: Option<bool>,
-    pub is_moved: Option<i32>,
-    pub is_mpim: Option<bool>,
-    pub is_org_shared: Option<bool>,
-    pub is_pending_ext_shared: Option<bool>,
-    pub is_private: Option<bool>,
-    pub is_read_only: Option<bool>,
-    pub is_shared: Option<bool>,
-    pub last_read: Option<String>,
-    pub latest: Option<::Message>,
-    pub members: Option<Vec<String>>,
-    pub name: Option<String>,
-    pub name_normalized: Option<String>,
-    pub num_members: Option<i32>,
-    pub previous_names: Option<Vec<String>>,
-    pub priority: Option<f32>,
-    pub purpose: Option<ChannelPurpose>,
-    pub topic: Option<ChannelTopic>,
-    pub unlinked: Option<i32>,
-    pub unread_count: Option<i32>,
-    pub unread_count_display: Option<i32>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct ChannelPurpose {
-    pub creator: Option<String>,
-    pub last_set: Option<i32>,
-    pub value: Option<String>,
-}
-
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct ChannelTopic {
-    pub creator: Option<String>,
-    pub last_set: Option<i32>,
-    pub value: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct File {
-    pub channels: Option<Vec<String>>,
-    pub comments_count: Option<i32>,
-    pub created: Option<i32>,
-    pub display_as_bot: Option<bool>,
-    pub edit_link: Option<String>,
-    pub editable: Option<bool>,
-    pub external_type: Option<String>,
-    pub filetype: Option<String>,
-    pub groups: Option<Vec<String>>,
-    pub id: Option<String>,
-    pub ims: Option<Vec<String>>,
-    pub initial_comment: Option<::FileComment>,
-    pub is_external: Option<bool>,
-    pub is_public: Option<bool>,
-    pub is_starred: Option<bool>,
-    pub lines: Option<i32>,
-    pub lines_more: Option<i32>,
-    pub mimetype: Option<String>,
-    pub mode: Option<String>,
-    pub name: Option<String>,
-    pub num_stars: Option<i32>,
-    pub permalink: Option<String>,
-    pub permalink_public: Option<String>,
-    pub pinned_to: Option<Vec<String>>,
-    pub pretty_type: Option<String>,
-    pub preview: Option<String>,
-    pub preview_highlight: Option<String>,
-    pub public_url_shared: Option<bool>,
-    pub reactions: Option<Vec<::Reaction>>,
-    pub size: Option<i32>,
-    pub thumb_160: Option<String>,
-    pub thumb_360: Option<String>,
-    pub thumb_360_gif: Option<String>,
-    pub thumb_360_h: Option<i32>,
-    pub thumb_360_w: Option<i32>,
-    pub thumb_480: Option<String>,
-    pub thumb_480_h: Option<i32>,
-    pub thumb_480_w: Option<i32>,
-    pub thumb_64: Option<String>,
-    pub thumb_80: Option<String>,
-    pub timestamp: Option<i32>,
-    pub title: Option<String>,
-    pub url_private: Option<String>,
-    pub url_private_download: Option<String>,
-    pub user: Option<String>,
-    pub username: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct FileComment {
-    pub comment: Option<String>,
-    pub id: Option<String>,
-    pub reactions: Option<Vec<::Reaction>>,
-    pub timestamp: Option<i32>,
-    pub user: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Group {
-    pub created: Option<i32>,
-    pub creator: Option<String>,
-    pub id: Option<String>,
-    pub is_archived: Option<bool>,
     pub is_group: Option<bool>,
     pub is_mpim: Option<bool>,
     pub last_read: Option<String>,
     pub latest: Option<::Message>,
     pub members: Option<Vec<String>>,
     pub name: Option<String>,
-    pub purpose: Option<GroupPurpose>,
-    pub topic: Option<GroupTopic>,
     pub unread_count: Option<i32>,
     pub unread_count_display: Option<i32>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct GroupPurpose {
-    pub creator: Option<String>,
-    pub last_set: Option<i32>,
-    pub value: Option<String>,
-}
-
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct GroupTopic {
-    pub creator: Option<String>,
-    pub last_set: Option<i32>,
-    pub value: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct Im {
     pub created: Option<i32>,
     pub id: Option<String>,
@@ -164,7 +24,15 @@ pub struct Im {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Paging {
+    pub count: Option<i32>,
+    pub page: Option<i32>,
+    pub pages: Option<i32>,
+    pub total: Option<i32>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Message {
     Standard(MessageStandard),
     BotMessage(MessageBotMessage),
@@ -380,27 +248,60 @@ impl<'de> ::serde::Deserialize<'de> for Message {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageBotMessage {
+    pub attachments: Option<Vec<MessageBotMessageAttachment>>,
     pub bot_id: Option<String>,
+    pub channel: Option<String>,
     pub icons: Option<MessageBotMessageIcons>,
     pub subtype: Option<String>,
+    pub team: Option<String>,
     pub text: Option<String>,
+    pub thread_ts: Option<String>,
     pub ts: Option<String>,
     #[serde(rename = "type")]
     pub ty: Option<String>,
     pub username: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct MessageBotMessageAttachment {
+    pub author_icon: Option<String>,
+    pub author_link: Option<String>,
+    pub author_name: Option<String>,
+    pub color: Option<String>,
+    pub fallback: Option<String>,
+    pub fields: Option<Vec<MessageBotMessageAttachmentField>>,
+    pub footer: Option<String>,
+    pub footer_icon: Option<String>,
+    pub image_url: Option<String>,
+    pub pretext: Option<String>,
+    pub text: Option<String>,
+    pub thumb_url: Option<String>,
+    pub title: Option<String>,
+    pub title_link: Option<String>,
+    pub ts: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct MessageBotMessageAttachmentField {
+    pub short: Option<bool>,
+    pub title: Option<String>,
+    pub value: Option<String>,
+}
+
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageBotMessageIcons {
+    pub emoji: Option<String>,
     pub image_36: Option<String>,
     pub image_48: Option<String>,
+    pub image_64: Option<String>,
     pub image_72: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelArchive {
     pub members: Option<Vec<String>>,
     pub subtype: Option<String>,
@@ -412,7 +313,7 @@ pub struct MessageChannelArchive {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelJoin {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -423,7 +324,7 @@ pub struct MessageChannelJoin {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelLeave {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -434,7 +335,7 @@ pub struct MessageChannelLeave {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelName {
     pub name: Option<String>,
     pub old_name: Option<String>,
@@ -447,7 +348,7 @@ pub struct MessageChannelName {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelPurpose {
     pub purpose: Option<String>,
     pub subtype: Option<String>,
@@ -459,7 +360,7 @@ pub struct MessageChannelPurpose {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelTopic {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -471,7 +372,7 @@ pub struct MessageChannelTopic {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageChannelUnarchive {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -482,7 +383,7 @@ pub struct MessageChannelUnarchive {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageFileComment {
     pub comment: Option<::FileComment>,
     pub file: Option<::File>,
@@ -494,7 +395,7 @@ pub struct MessageFileComment {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageFileMention {
     pub file: Option<::File>,
     pub subtype: Option<String>,
@@ -506,7 +407,7 @@ pub struct MessageFileMention {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageFileShare {
     pub file: Option<::File>,
     pub subtype: Option<String>,
@@ -519,7 +420,7 @@ pub struct MessageFileShare {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupArchive {
     pub members: Option<Vec<String>>,
     pub subtype: Option<String>,
@@ -531,7 +432,7 @@ pub struct MessageGroupArchive {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupJoin {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -542,7 +443,7 @@ pub struct MessageGroupJoin {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupLeave {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -553,7 +454,7 @@ pub struct MessageGroupLeave {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupName {
     pub name: Option<String>,
     pub old_name: Option<String>,
@@ -566,7 +467,7 @@ pub struct MessageGroupName {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupPurpose {
     pub purpose: Option<String>,
     pub subtype: Option<String>,
@@ -578,7 +479,7 @@ pub struct MessageGroupPurpose {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupTopic {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -590,7 +491,7 @@ pub struct MessageGroupTopic {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageGroupUnarchive {
     pub subtype: Option<String>,
     pub text: Option<String>,
@@ -601,7 +502,7 @@ pub struct MessageGroupUnarchive {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMeMessage {
     pub channel: Option<String>,
     pub subtype: Option<String>,
@@ -613,7 +514,7 @@ pub struct MessageMeMessage {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChanged {
     pub channel: Option<String>,
     pub event_ts: Option<String>,
@@ -626,7 +527,7 @@ pub struct MessageMessageChanged {
     pub ty: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChangedMessage {
     pub bot_id: Option<String>,
     pub edited: Option<MessageMessageChangedMessageEdited>,
@@ -644,21 +545,21 @@ pub struct MessageMessageChangedMessage {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChangedMessageEdited {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChangedMessageReply {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChangedPreviousMessage {
     pub bot_id: Option<String>,
     pub edited: Option<MessageMessageChangedPreviousMessageEdited>,
@@ -676,21 +577,21 @@ pub struct MessageMessageChangedPreviousMessage {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChangedPreviousMessageEdited {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageChangedPreviousMessageReply {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageDeleted {
     pub channel: Option<String>,
     pub deleted_ts: Option<String>,
@@ -703,7 +604,7 @@ pub struct MessageMessageDeleted {
     pub ty: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageDeletedPreviousMessage {
     pub bot_id: Option<String>,
     pub edited: Option<MessageMessageDeletedPreviousMessageEdited>,
@@ -721,21 +622,21 @@ pub struct MessageMessageDeletedPreviousMessage {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageDeletedPreviousMessageEdited {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageDeletedPreviousMessageReply {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageReplied {
     pub channel: Option<String>,
     pub event_ts: Option<String>,
@@ -748,7 +649,7 @@ pub struct MessageMessageReplied {
     pub ty: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageRepliedMessage {
     pub bot_id: Option<String>,
     pub edited: Option<MessageMessageRepliedMessageEdited>,
@@ -766,21 +667,21 @@ pub struct MessageMessageRepliedMessage {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageRepliedMessageEdited {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageMessageRepliedMessageReply {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessagePinnedItem {
     pub channel: Option<String>,
     pub item: Option<MessagePinnedItemItem>,
@@ -793,11 +694,11 @@ pub struct MessagePinnedItem {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessagePinnedItemItem {}
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageReplyBroadcast {
     pub attachments: Option<Vec<MessageReplyBroadcastAttachment>>,
     pub channel: Option<String>,
@@ -809,7 +710,7 @@ pub struct MessageReplyBroadcast {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageReplyBroadcastAttachment {
     pub author_icon: Option<String>,
     pub author_link: Option<String>,
@@ -826,7 +727,7 @@ pub struct MessageReplyBroadcastAttachment {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageStandard {
     pub attachments: Option<Vec<MessageStandardAttachment>>,
     pub bot_id: Option<String>,
@@ -844,7 +745,7 @@ pub struct MessageStandard {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageStandardAttachment {
     pub author_icon: Option<String>,
     pub author_link: Option<String>,
@@ -860,10 +761,10 @@ pub struct MessageStandardAttachment {
     pub thumb_url: Option<String>,
     pub title: Option<String>,
     pub title_link: Option<String>,
-    pub ts: Option<f32>,
+    pub ts: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageStandardAttachmentField {
     pub short: Option<bool>,
     pub title: Option<String>,
@@ -871,14 +772,14 @@ pub struct MessageStandardAttachmentField {
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageStandardEdited {
     pub ts: Option<String>,
     pub user: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageUnpinnedItem {
     pub channel: Option<String>,
     pub item: Option<MessageUnpinnedItemItem>,
@@ -891,77 +792,10 @@ pub struct MessageUnpinnedItem {
     pub user: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageUnpinnedItemItem {}
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct Mpim {
-    pub created: Option<i32>,
-    pub creator: Option<String>,
-    pub id: Option<String>,
-    pub is_group: Option<bool>,
-    pub is_mpim: Option<bool>,
-    pub last_read: Option<String>,
-    pub latest: Option<::Message>,
-    pub members: Option<Vec<String>>,
-    pub name: Option<String>,
-    pub unread_count: Option<i32>,
-    pub unread_count_display: Option<i32>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Paging {
-    pub count: Option<i32>,
-    pub page: Option<i32>,
-    pub pages: Option<i32>,
-    pub total: Option<i32>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Reaction {
-    pub count: Option<i32>,
-    pub name: Option<String>,
-    pub users: Option<Vec<String>>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Reminder {
-    pub complete_ts: Option<f32>,
-    pub creator: Option<String>,
-    pub id: Option<String>,
-    pub recurring: Option<bool>,
-    pub text: Option<String>,
-    pub time: Option<f32>,
-    pub user: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct Team {
-    pub domain: Option<String>,
-    pub email_domain: Option<String>,
-    pub icon: Option<TeamIcon>,
-    pub id: Option<String>,
-    pub name: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct TeamIcon {
-    pub image_102: Option<String>,
-    pub image_132: Option<String>,
-    pub image_34: Option<String>,
-    pub image_44: Option<String>,
-    pub image_68: Option<String>,
-    pub image_88: Option<String>,
-    pub image_default: Option<bool>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct ThreadInfo {
-    pub complete: Option<bool>,
-    pub count: Option<i32>,
-}
-
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct User {
     pub color: Option<String>,
     pub deleted: Option<bool>,
@@ -982,37 +816,27 @@ pub struct User {
     pub two_factor_type: Option<String>,
     pub tz: Option<String>,
     pub tz_label: Option<String>,
-    pub tz_offset: Option<f32>,
-    pub updated: Option<f32>,
+    pub tz_offset: Option<String>,
+    pub updated: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct Usergroup {
-    pub auto_type: Option<String>,
-    pub created_by: Option<String>,
-    pub date_create: Option<i32>,
-    pub date_delete: Option<i32>,
-    pub date_update: Option<i32>,
-    pub deleted_by: Option<String>,
-    pub description: Option<String>,
-    pub handle: Option<String>,
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Bot {
+    pub app_id: Option<String>,
+    pub deleted: Option<bool>,
+    pub icons: Option<BotIcons>,
     pub id: Option<String>,
-    pub is_external: Option<bool>,
-    pub is_usergroup: Option<bool>,
     pub name: Option<String>,
-    pub prefs: Option<UsergroupPrefs>,
-    pub team_id: Option<String>,
-    pub updated_by: Option<String>,
-    pub user_count: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct UsergroupPrefs {
-    pub channels: Option<Vec<String>>,
-    pub groups: Option<Vec<String>>,
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct BotIcons {
+    pub image_36: Option<String>,
+    pub image_48: Option<String>,
+    pub image_72: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct UserProfile {
     pub avatar_hash: Option<String>,
     pub display_name: Option<String>,
@@ -1041,9 +865,218 @@ pub struct UserProfile {
     pub title: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct UserProfileFields {
     pub alt: Option<String>,
     pub label: Option<String>,
     pub value: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Reaction {
+    pub count: Option<i32>,
+    pub name: Option<String>,
+    pub users: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct ThreadInfo {
+    pub complete: Option<bool>,
+    pub count: Option<i32>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Usergroup {
+    pub auto_type: Option<String>,
+    pub created_by: Option<String>,
+    pub date_create: Option<i32>,
+    pub date_delete: Option<i32>,
+    pub date_update: Option<i32>,
+    pub deleted_by: Option<String>,
+    pub description: Option<String>,
+    pub handle: Option<String>,
+    pub id: Option<String>,
+    pub is_external: Option<bool>,
+    pub is_usergroup: Option<bool>,
+    pub name: Option<String>,
+    pub prefs: Option<UsergroupPrefs>,
+    pub team_id: Option<String>,
+    pub updated_by: Option<String>,
+    pub user_count: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct UsergroupPrefs {
+    pub channels: Option<Vec<String>>,
+    pub groups: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Group {
+    pub created: Option<i32>,
+    pub creator: Option<String>,
+    pub id: Option<String>,
+    pub is_archived: Option<bool>,
+    pub is_group: Option<bool>,
+    pub is_mpim: Option<bool>,
+    pub last_read: Option<String>,
+    pub latest: Option<::Message>,
+    pub members: Option<Vec<String>>,
+    pub name: Option<String>,
+    pub purpose: Option<GroupPurpose>,
+    pub topic: Option<GroupTopic>,
+    pub unread_count: Option<i32>,
+    pub unread_count_display: Option<i32>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct GroupPurpose {
+    pub creator: Option<String>,
+    pub last_set: Option<i32>,
+    pub value: Option<String>,
+}
+
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct GroupTopic {
+    pub creator: Option<String>,
+    pub last_set: Option<i32>,
+    pub value: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Channel {
+    pub accepted_user: Option<String>,
+    pub created: Option<i32>,
+    pub creator: Option<String>,
+    pub id: Option<String>,
+    pub is_archived: Option<bool>,
+    pub is_channel: Option<bool>,
+    pub is_general: Option<bool>,
+    pub is_member: Option<bool>,
+    pub is_moved: Option<i32>,
+    pub is_mpim: Option<bool>,
+    pub is_org_shared: Option<bool>,
+    pub is_pending_ext_shared: Option<bool>,
+    pub is_private: Option<bool>,
+    pub is_read_only: Option<bool>,
+    pub is_shared: Option<bool>,
+    pub last_read: Option<String>,
+    pub latest: Option<::Message>,
+    pub members: Option<Vec<String>>,
+    pub name: Option<String>,
+    pub name_normalized: Option<String>,
+    pub num_members: Option<i32>,
+    pub previous_names: Option<Vec<String>>,
+    pub priority: Option<String>,
+    pub purpose: Option<ChannelPurpose>,
+    pub topic: Option<ChannelTopic>,
+    pub unlinked: Option<i32>,
+    pub unread_count: Option<i32>,
+    pub unread_count_display: Option<i32>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct ChannelPurpose {
+    pub creator: Option<String>,
+    pub last_set: Option<i32>,
+    pub value: Option<String>,
+}
+
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct ChannelTopic {
+    pub creator: Option<String>,
+    pub last_set: Option<i32>,
+    pub value: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct FileComment {
+    pub comment: Option<String>,
+    pub id: Option<String>,
+    pub reactions: Option<Vec<::Reaction>>,
+    pub timestamp: Option<i32>,
+    pub user: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Team {
+    pub domain: Option<String>,
+    pub email_domain: Option<String>,
+    pub icon: Option<TeamIcon>,
+    pub id: Option<String>,
+    pub name: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct TeamIcon {
+    pub image_102: Option<String>,
+    pub image_132: Option<String>,
+    pub image_34: Option<String>,
+    pub image_44: Option<String>,
+    pub image_68: Option<String>,
+    pub image_88: Option<String>,
+    pub image_default: Option<bool>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct File {
+    pub channels: Option<Vec<String>>,
+    pub comments_count: Option<i32>,
+    pub created: Option<i32>,
+    pub display_as_bot: Option<bool>,
+    pub edit_link: Option<String>,
+    pub editable: Option<bool>,
+    pub external_type: Option<String>,
+    pub filetype: Option<String>,
+    pub groups: Option<Vec<String>>,
+    pub id: Option<String>,
+    pub ims: Option<Vec<String>>,
+    pub initial_comment: Option<::FileComment>,
+    pub is_external: Option<bool>,
+    pub is_public: Option<bool>,
+    pub is_starred: Option<bool>,
+    pub lines: Option<i32>,
+    pub lines_more: Option<i32>,
+    pub mimetype: Option<String>,
+    pub mode: Option<String>,
+    pub name: Option<String>,
+    pub num_stars: Option<i32>,
+    pub permalink: Option<String>,
+    pub permalink_public: Option<String>,
+    pub pinned_to: Option<Vec<String>>,
+    pub pretty_type: Option<String>,
+    pub preview: Option<String>,
+    pub preview_highlight: Option<String>,
+    pub public_url_shared: Option<bool>,
+    pub reactions: Option<Vec<::Reaction>>,
+    pub size: Option<i32>,
+    pub thumb_160: Option<String>,
+    pub thumb_360: Option<String>,
+    pub thumb_360_gif: Option<String>,
+    pub thumb_360_h: Option<i32>,
+    pub thumb_360_w: Option<i32>,
+    pub thumb_480: Option<String>,
+    pub thumb_480_h: Option<i32>,
+    pub thumb_480_w: Option<i32>,
+    pub thumb_64: Option<String>,
+    pub thumb_80: Option<String>,
+    pub timestamp: Option<i32>,
+    pub title: Option<String>,
+    pub url_private: Option<String>,
+    pub url_private_download: Option<String>,
+    pub user: Option<String>,
+    pub username: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+pub struct Reminder {
+    pub complete_ts: Option<String>,
+    pub creator: Option<String>,
+    pub id: Option<String>,
+    pub recurring: Option<bool>,
+    pub text: Option<String>,
+    pub time: Option<String>,
+    pub user: Option<String>,
 }

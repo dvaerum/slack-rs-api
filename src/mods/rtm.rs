@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -31,7 +32,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ConnectResponse {
     error: Option<String>,
     #[serde(default)]
@@ -42,14 +43,14 @@ pub struct ConnectResponse {
     pub url: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ConnectResponseSelf {
     pub id: Option<String>,
     pub name: Option<String>,
 }
 
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ConnectResponseTeam {
     pub domain: Option<String>,
     pub enterprise_id: Option<String>,
@@ -98,6 +99,36 @@ pub enum ConnectError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for ConnectError<E> {}
+
+impl<E: Error> PartialEq for ConnectError<E> {
+    fn eq(&self, other: &ConnectError<E>) -> bool {
+        match &self {
+            ConnectError::MalformedResponse(e) => {
+                match other {
+                    ConnectError::MalformedResponse(ee) => {
+                        format!("{:?}", e) == format!("{:?}", ee)
+                    }
+                    _ => false,
+                }
+            }
+            ConnectError::Unknown(s) => {
+                match other {
+                    ConnectError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            ConnectError::Client(e) => {
+                match other {
+                    ConnectError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<ConnectError<E>>(&self) == discriminant::<ConnectError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for ConnectError<E> {
@@ -217,7 +248,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct StartRequest {
     /// Skip unread counts for each channel (improves performance).
     pub no_unreads: Option<bool>,
@@ -231,7 +262,7 @@ pub struct StartRequest {
     pub include_locale: Option<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct StartResponse {
     pub bots: Option<Vec<::Bot>>,
     pub channels: Option<Vec<::Channel>>,
@@ -290,6 +321,34 @@ pub enum StartError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for StartError<E> {}
+
+impl<E: Error> PartialEq for StartError<E> {
+    fn eq(&self, other: &StartError<E>) -> bool {
+        match &self {
+            StartError::MalformedResponse(e) => {
+                match other {
+                    StartError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            StartError::Unknown(s) => {
+                match other {
+                    StartError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            StartError::Client(e) => {
+                match other {
+                    StartError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<StartError<E>>(&self) == discriminant::<StartError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for StartError<E> {

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -40,13 +41,13 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct RevokeRequest {
     /// Setting this parameter to 1 triggers a testing mode where the specified token will not actually be revoked.
     pub test: Option<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct RevokeResponse {
     error: Option<String>,
     #[serde(default)]
@@ -94,6 +95,34 @@ pub enum RevokeError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for RevokeError<E> {}
+
+impl<E: Error> PartialEq for RevokeError<E> {
+    fn eq(&self, other: &RevokeError<E>) -> bool {
+        match &self {
+            RevokeError::MalformedResponse(e) => {
+                match other {
+                    RevokeError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            RevokeError::Unknown(s) => {
+                match other {
+                    RevokeError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            RevokeError::Client(e) => {
+                match other {
+                    RevokeError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<RevokeError<E>>(&self) == discriminant::<RevokeError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for RevokeError<E> {
@@ -187,7 +216,7 @@ where
         .and_then(|o| o.into())
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct TestResponse {
     error: Option<String>,
     #[serde(default)]
@@ -239,6 +268,34 @@ pub enum TestError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for TestError<E> {}
+
+impl<E: Error> PartialEq for TestError<E> {
+    fn eq(&self, other: &TestError<E>) -> bool {
+        match &self {
+            TestError::MalformedResponse(e) => {
+                match other {
+                    TestError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            TestError::Unknown(s) => {
+                match other {
+                    TestError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            TestError::Client(e) => {
+                match other {
+                    TestError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<TestError<E>>(&self) == discriminant::<TestError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for TestError<E> {

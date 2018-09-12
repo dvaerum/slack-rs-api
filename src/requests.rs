@@ -6,6 +6,7 @@ use std::error;
 ///
 /// If you do not have a custom client to integrate with and just want to send requests, use
 /// the [`default_client()`] function to get a simple request sender.
+///
 pub trait SlackWebRequestSender {
     type Error: error::Error;
 

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::error::Error;
 use std::fmt;
+use std::mem::discriminant;
 
 use serde_json;
 
@@ -40,7 +41,7 @@ where
         })
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
 pub struct AccessRequest<'a> {
     /// Issued when you created your application.
     pub client_id: &'a str,
@@ -52,7 +53,7 @@ pub struct AccessRequest<'a> {
     pub redirect_uri: Option<&'a str>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct AccessResponse {
     pub access_token: Option<String>,
     pub scope: Option<String>,
@@ -92,6 +93,34 @@ pub enum AccessError<E: Error> {
     Unknown(String),
     /// The client had an error sending the request to Slack
     Client(E),
+}
+
+impl<E: Error> Eq for AccessError<E> {}
+
+impl<E: Error> PartialEq for AccessError<E> {
+    fn eq(&self, other: &AccessError<E>) -> bool {
+        match &self {
+            AccessError::MalformedResponse(e) => {
+                match other {
+                    AccessError::MalformedResponse(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            AccessError::Unknown(s) => {
+                match other {
+                    AccessError::Unknown(ss) => s == ss,
+                    _ => false,
+                }
+            }
+            AccessError::Client(e) => {
+                match other {
+                    AccessError::Client(ee) => format!("{:?}", e) == format!("{:?}", ee),
+                    _ => false,
+                }
+            }
+            _ => discriminant::<AccessError<E>>(&self) == discriminant::<AccessError<E>>(&other),
+        }
+    }
 }
 
 impl<'a, E: Error> From<&'a str> for AccessError<E> {
