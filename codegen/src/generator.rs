@@ -19,6 +19,7 @@ impl Module {
             use std::convert::From;
             use std::error::Error;
             use std::fmt;
+            use std::mem::discriminant;
 
             use serde_json;
 
@@ -189,7 +190,7 @@ impl Method {
 
     fn get_request_struct(&self, ty_name: &str) -> String {
         format!("\
-            #[derive(Clone, Default, Debug)]
+            #[derive(Clone, Default, Debug, Eq, PartialEq)]
             pub struct {request_type}{lifetime} {{
                 {request_params}
             }}",
@@ -341,6 +342,34 @@ impl Response {
                 Unknown(String),
                 /// The client had an error sending the request to Slack
                 Client(E)
+            }}
+
+            impl<E: Error> Eq for {error_type}<E> {{}}
+
+            impl<E: Error> PartialEq for {error_type}<E> {{
+                fn eq(&self, other: &{error_type}<E>) -> bool {{
+                    match &self {{
+                        {error_type}::MalformedResponse(e) => {{
+                            match other {{
+                                {error_type}::MalformedResponse(ee) => format!(\"{{:?}}\", e) == format!(\"{{:?}}\", ee),
+                                _ => false,
+                            }}
+                        }},
+                        {error_type}::Unknown(s) => {{
+                            match other {{
+                                {error_type}::Unknown(ss) =>  s == ss,
+                                _ => false,
+                            }}
+                        }},
+                        {error_type}::Client(e) => {{
+                            match other {{
+                                {error_type}::Client(ee) => format!(\"{{:?}}\", e) == format!(\"{{:?}}\", ee),
+                                _ => false,
+                            }}
+                        }}
+                        _ => discriminant::<{error_type}<E>>(&self) == discriminant::<{error_type}<E>>(&other),
+                    }}
+                }}
             }}
 
             impl<'a, E: Error> From<&'a str> for {error_type}<E> {{
@@ -545,7 +574,7 @@ impl JsonEnum {
             .join("\n");
 
         format!("\
-            #[derive(Clone, Debug)]
+            #[derive(Clone, Debug, Eq, PartialEq)]
             pub enum {name} {{
                 {variants}
             }}
@@ -633,7 +662,7 @@ impl JsonObject {
             .collect::<Vec<_>>();
 
         format!("\
-            #[derive(Clone, Debug, Deserialize)]
+            #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
             pub struct {name} {{
                 {fields}
             }}
