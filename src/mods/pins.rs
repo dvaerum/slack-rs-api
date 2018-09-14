@@ -6,6 +6,8 @@ use std::convert::From;
 use std::error::Error;
 use std::fmt;
 use std::mem::discriminant;
+#[allow(unused_imports)]
+use timestamp::Timestamp;
 
 use serde_json;
 
@@ -345,7 +347,7 @@ impl<'de> ::serde::Deserialize<'de> for ListResponseItem {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ListResponseItemFile {
-    pub created: Option<String>,
+    pub created: Option<Timestamp>,
     pub created_by: Option<String>,
     pub file: ::File,
     #[serde(rename = "type")]
@@ -356,7 +358,7 @@ pub struct ListResponseItemFile {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ListResponseItemFileComment {
     pub comment: ::FileComment,
-    pub created: Option<String>,
+    pub created: Option<Timestamp>,
     pub created_by: Option<String>,
     pub file: ::File,
     #[serde(rename = "type")]
@@ -367,7 +369,7 @@ pub struct ListResponseItemFileComment {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct ListResponseItemMessage {
     pub channel: String,
-    pub created: Option<String>,
+    pub created: Option<Timestamp>,
     pub created_by: Option<String>,
     pub message: ::Message,
     #[serde(rename = "type")]

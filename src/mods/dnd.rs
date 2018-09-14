@@ -7,6 +7,8 @@ use std::convert::From;
 use std::error::Error;
 use std::fmt;
 use std::mem::discriminant;
+#[allow(unused_imports)]
+use timestamp::Timestamp;
 
 use serde_json;
 
@@ -215,8 +217,8 @@ where
 pub struct EndSnoozeResponse {
     pub dnd_enabled: Option<bool>,
     error: Option<String>,
-    pub next_dnd_end_ts: Option<String>,
-    pub next_dnd_start_ts: Option<String>,
+    pub next_dnd_end_ts: Option<Timestamp>,
+    pub next_dnd_start_ts: Option<Timestamp>,
     #[serde(default)]
     ok: bool,
     pub snooze_enabled: Option<bool>,
@@ -423,13 +425,13 @@ pub struct InfoRequest<'a> {
 pub struct InfoResponse {
     pub dnd_enabled: Option<bool>,
     error: Option<String>,
-    pub next_dnd_end_ts: Option<String>,
-    pub next_dnd_start_ts: Option<String>,
+    pub next_dnd_end_ts: Option<Timestamp>,
+    pub next_dnd_start_ts: Option<Timestamp>,
     #[serde(default)]
     ok: bool,
     pub snooze_enabled: Option<bool>,
-    pub snooze_endtime: Option<String>,
-    pub snooze_remaining: Option<String>,
+    pub snooze_endtime: Option<Timestamp>,
+    pub snooze_remaining: Option<Timestamp>,
 }
 
 
@@ -620,8 +622,8 @@ pub struct SetSnoozeResponse {
     #[serde(default)]
     ok: bool,
     pub snooze_enabled: Option<bool>,
-    pub snooze_endtime: Option<String>,
-    pub snooze_remaining: Option<String>,
+    pub snooze_endtime: Option<Timestamp>,
+    pub snooze_remaining: Option<Timestamp>,
 }
 
 

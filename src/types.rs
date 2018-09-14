@@ -1,13 +1,13 @@
 use std::collections::HashMap;
-
+use timestamp::Timestamp;
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct Reminder {
-    pub complete_ts: Option<String>,
+    pub complete_ts: Option<Timestamp>,
     pub creator: Option<String>,
     pub id: Option<String>,
     pub recurring: Option<bool>,
     pub text: Option<String>,
-    pub time: Option<String>,
+    pub time: Option<Timestamp>,
     pub user: Option<String>,
 }
 
@@ -96,7 +96,7 @@ pub struct Channel {
     pub name_normalized: Option<String>,
     pub num_members: Option<i32>,
     pub previous_names: Option<Vec<String>>,
-    pub priority: Option<String>,
+    pub priority: Option<Timestamp>,
     pub purpose: Option<ChannelPurpose>,
     pub topic: Option<ChannelTopic>,
     pub unlinked: Option<i32>,
@@ -551,37 +551,37 @@ pub struct MessageFileShare {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageFileShareFile {
-    pub created: Option<String>,
+    pub created: Option<Timestamp>,
     pub display_as_bot: Option<bool>,
     pub editable: Option<bool>,
     pub external_type: Option<String>,
     pub filetype: Option<String>,
     pub has_rich_preview: Option<bool>,
     pub id: Option<String>,
-    pub image_exif_rotation: Option<String>,
+    pub image_exif_rotation: Option<Timestamp>,
     pub is_external: Option<bool>,
     pub is_public: Option<bool>,
     pub mimetype: Option<String>,
     pub mode: Option<String>,
     pub name: Option<String>,
-    pub original_h: Option<String>,
-    pub original_w: Option<String>,
+    pub original_h: Option<Timestamp>,
+    pub original_w: Option<Timestamp>,
     pub permalink: Option<String>,
     pub permalink_public: Option<String>,
     pub pjpeg: Option<String>,
     pub pretty_type: Option<String>,
     pub public_url_shared: Option<bool>,
-    pub size: Option<String>,
+    pub size: Option<Timestamp>,
     pub thumb_160: Option<String>,
     pub thumb_360: Option<String>,
-    pub thumb_360_h: Option<String>,
-    pub thumb_360_w: Option<String>,
+    pub thumb_360_h: Option<Timestamp>,
+    pub thumb_360_w: Option<Timestamp>,
     pub thumb_480: Option<String>,
-    pub thumb_480_h: Option<String>,
-    pub thumb_480_w: Option<String>,
+    pub thumb_480_h: Option<Timestamp>,
+    pub thumb_480_w: Option<Timestamp>,
     pub thumb_64: Option<String>,
     pub thumb_80: Option<String>,
-    pub timestamp: Option<String>,
+    pub timestamp: Option<Timestamp>,
     pub title: Option<String>,
     pub url_private: Option<String>,
     pub url_private_download: Option<String>,
@@ -800,7 +800,7 @@ pub struct MessageStandardAttachment {
     pub thumb_url: Option<String>,
     pub title: Option<String>,
     pub title_link: Option<String>,
-    pub ts: Option<String>,
+    pub ts: Option<Timestamp>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
@@ -840,13 +840,13 @@ pub struct MessageThreadBroadcastMessage {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct MessageThreadBroadcastMessageRoot {
     pub replies: Option<Vec<MessageThreadBroadcastMessageRootReply>>,
-    pub reply_count: Option<String>,
+    pub reply_count: Option<Timestamp>,
     pub text: Option<String>,
     pub thread_ts: Option<String>,
     pub ts: Option<String>,
     #[serde(rename = "type")]
     pub ty: Option<String>,
-    pub unread_count: Option<String>,
+    pub unread_count: Option<Timestamp>,
     pub user: Option<String>,
 }
 
@@ -894,8 +894,8 @@ pub struct User {
     pub two_factor_type: Option<String>,
     pub tz: Option<String>,
     pub tz_label: Option<String>,
-    pub tz_offset: Option<String>,
-    pub updated: Option<String>,
+    pub tz_offset: Option<Timestamp>,
+    pub updated: Option<Timestamp>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]

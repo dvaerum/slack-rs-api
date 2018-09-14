@@ -7,6 +7,8 @@ use std::convert::From;
 use std::error::Error;
 use std::fmt;
 use std::mem::discriminant;
+#[allow(unused_imports)]
+use timestamp::Timestamp;
 
 use serde_json;
 
@@ -2254,7 +2256,7 @@ pub struct RenameResponse {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct RenameResponseChannel {
-    pub created: Option<String>,
+    pub created: Option<Timestamp>,
     pub id: Option<String>,
     pub is_channel: Option<bool>,
     pub name: Option<String>,

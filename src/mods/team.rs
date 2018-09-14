@@ -6,6 +6,8 @@ use std::convert::From;
 use std::error::Error;
 use std::fmt;
 use std::mem::discriminant;
+#[allow(unused_imports)]
+use timestamp::Timestamp;
 
 use serde_json;
 
@@ -67,8 +69,8 @@ pub struct AccessLogsResponse {
 pub struct AccessLogsResponseLogin {
     pub count: Option<i32>,
     pub country: Option<String>,
-    pub date_first: Option<String>,
-    pub date_last: Option<String>,
+    pub date_first: Option<Timestamp>,
+    pub date_last: Option<Timestamp>,
     pub ip: Option<String>,
     pub isp: Option<String>,
     pub region: Option<String>,
