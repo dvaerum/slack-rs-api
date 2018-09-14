@@ -31,7 +31,9 @@ fn generate_types(output_path: &Path) -> io::Result<()> {
         .create(true)
         .open(&codegen_filepath)?;
 
-    types_file.write_all(b"use std::collections::HashMap;\n\n")?;
+    types_file.write_all(b"use std::collections::HashMap;\
+                           use timestamp::Timestamp;\
+                           \n")?;
 
     let schema_path = Path::new(SCHEMA_DIR);
 

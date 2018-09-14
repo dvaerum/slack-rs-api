@@ -20,6 +20,8 @@ impl Module {
             use std::error::Error;
             use std::fmt;
             use std::mem::discriminant;
+            #[allow(unused_imports)]
+            use timestamp::Timestamp;
 
             use serde_json;
 

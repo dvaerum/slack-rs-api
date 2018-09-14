@@ -188,7 +188,8 @@ impl PropType {
         match *self {
             PropType::Str => "String".into(),
             PropType::Int => "i32".into(),
-            PropType::Num => "String".into(),
+//            PropType::Num => "String".into(),
+            PropType::Num => "Timestamp".into(),
             PropType::Bool => "bool".into(),
             PropType::Null => "()".into(),
             PropType::Obj(ref obj) => obj.name.clone(),
