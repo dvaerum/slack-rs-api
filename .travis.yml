@@ -4,15 +4,11 @@ before_install:
   - git submodule update --remote
 
 install:
-  - pwd
   - cd codegen
-  - pwd
   - cargo run
 
 script:
-  - pwd
-  - cd
-  - pwd
+  - cd ..
   - cargo build
 
 after_success:
