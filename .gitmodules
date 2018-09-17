@@ -1,3 +1,4 @@
 [submodule "codegen/slack-api-schemas"]
 	path = codegen/slack-api-schemas
 	url = https://github.com/dvarum12/slack-api-schemas.git
+	branch = CI
