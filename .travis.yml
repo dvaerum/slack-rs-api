@@ -12,9 +12,6 @@ script:
   - cargo build
 
 after_success:
-  - pwd
-  - cd
-  - pwd
   - .travis/push.sh
 
 #deploy:
