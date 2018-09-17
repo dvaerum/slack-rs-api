@@ -4,15 +4,21 @@ before_install:
   - git submodule update --remote
 
 install:
+  - pwd
   - cd codegen
+  - pwd
   - cargo run
 
 script:
+  - pwd
   - cd
+  - pwd
   - cargo build
 
 after_success:
+  - pwd
   - cd
+  - pwd
   - .travis/push.sh
 
 #deploy:
