@@ -1,16 +1,16 @@
 language: rust
 
+before_install:
+  - git submodule update --remote
+
 install:
   - cd codegen
   - cargo run
 
-before_script:
-  - git submodule update --remote
-
 script: cargo build
 
 after_success:
-  - push.sh
+  - .travis/push.sh
 
 #deploy:
   #provider: pages
