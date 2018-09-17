@@ -21,3 +21,4 @@ after_success:
   #local-dir: "src/"
   #on:
     #branch: CI
+
