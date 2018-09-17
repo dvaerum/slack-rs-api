@@ -7,9 +7,12 @@ install:
   - cd codegen
   - cargo run
 
-script: cargo build
+script:
+  - cd
+  - cargo build
 
 after_success:
+  - cd
   - .travis/push.sh
 
 #deploy:
